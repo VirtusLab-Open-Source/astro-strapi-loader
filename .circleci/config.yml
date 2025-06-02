@@ -19,8 +19,8 @@ jobs:
       - restore_cache:
           keys:
             # when lock file changes, use increasingly general patterns to restore cache
-            - astro-strapi-blocks-v1-{{ checksum "yarn.lock" }}
-            - astro-strapi-blocks-
+            - astro-strapi-loader-v1-{{ checksum "yarn.lock" }}
+            - astro-strapi-loader-
       - run:
           name: Echo versions
           command: |
@@ -52,7 +52,7 @@ jobs:
       - save_cache:
           paths:
             - ./node_modules
-          key: astro-strapi-blocks-v1-{{ checksum "yarn.lock" }}
+          key: astro-strapi-loader-v1-{{ checksum "yarn.lock" }}
       - persist_to_workspace:
           root: ~/repo
           paths: .
