@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  codecov: codecov/codecov@1.1.1
+  codecov: codecov/codecov@5
 jobs:
   test:
     docker:
@@ -43,12 +43,12 @@ jobs:
           command: |
             yarn test:ci
           environment:
-            JEST_JUNIT_OUTPUT_DIR: ./reports/
+            JEST_JUNIT_OUTPUT_DIR: ./coverage/
       - store_test_results:
-          path: ./reports/
+          path: ./coverage/
       - codecov/upload:
           flags: unittest
-          file:
+          file: ./coverage/coverage-final.json
       - save_cache:
           paths:
             - ./node_modules
@@ -76,8 +76,6 @@ jobs:
           name: Publish package
           command: npm publish --tag latest
   deployBeta:
-    environment:
-      CODECOV_TOKEN: 08a98f72-f099-432a-a6b5-49c1f134fe90
     docker:
       - image: cimg/node:20.12.2
     working_directory: ~/repo
