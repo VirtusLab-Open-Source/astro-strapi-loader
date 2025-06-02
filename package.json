@@ -1,6 +1,6 @@
 {
   "name": "@sensinum/astro-strapi-loader",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Astro loader for Strapi CMS",
   "keywords": [
     "astro",
@@ -54,8 +54,7 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "check": "tsc --noEmit",
-    "prepare": "husky install",
-    "postinstall": "husky install"
+    "prepare": "husky install"
   },
   "dependencies": {
     "astro": "^5.0.0"
