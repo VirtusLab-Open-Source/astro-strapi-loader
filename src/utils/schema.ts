@@ -10,7 +10,7 @@ export class StrapiSchemaGenerator {
     this.strict = strict;
   }
 
-  private generateAttributeSchema(attribute: StrapiAttribute): z.ZodType<unknown> {
+  private generateAttributeSchema(attribute: StrapiAttribute, pupulatedRelations: Array<string> = []): z.ZodType<unknown> | null {
     const ref = this;
     switch (attribute.type) {
       case "string":
@@ -90,24 +90,30 @@ export class StrapiSchemaGenerator {
         if (!attribute.relation)
           throw new Error("Relation type requires relation target");
         const targetType = ref.contentTypes.find(
-          (contentType) => contentType.apiID === attribute.relationTargetModel,
+          (contentType) =>
+            contentType.apiID === attribute.target ||
+            contentType.uid === attribute.target,
         );
+
         if (!targetType)
           throw new Error(`Target type ${attribute.relation} not found`);
 
-        const relationSchema = ref.generateContentTypeSchema(targetType.schema);
+        if (attribute.targetAttribute && pupulatedRelations.includes(attribute.targetAttribute)) {
+          return null;
+        }
+
+        const relationSchema = ref.generateContentTypeSchema(
+          targetType.schema,
+          attribute.targetAttribute ? [...pupulatedRelations, attribute.targetAttribute] : pupulatedRelations,
+        );
 
         switch (attribute.relation) {
           case "oneToOne":
           case "manyToOne":
-            return z.object({
-              data: relationSchema.nullable(),
-            });
+            return relationSchema;
           case "oneToMany":
           case "manyToMany":
-            return z.object({
-              data: z.array(relationSchema),
-            });
+            return z.array(relationSchema);
           default:
             throw new Error(
               `Unsupported relation type: ${attribute.relationType}`,
@@ -131,6 +137,7 @@ export class StrapiSchemaGenerator {
 
   private generateContentTypeSchema(
     contentTypeSchema: StrapiContentType["schema"],
+    pupulatedRelations?: Array<string>
   ): z.ZodObject<any> {
     const ref = this;
     const shape: Record<string, z.ZodTypeAny> = Object.entries(
@@ -138,16 +145,19 @@ export class StrapiSchemaGenerator {
     ).reduce(
       (acc, [key, attribute]) => {
         try {
-          const schema = ref.generateAttributeSchema(attribute);
-          return {
-            ...acc,
-            [key]:
-              ref.strict && attribute.required
-                ? schema
-                : schema.nullable().optional(),
-          };
+          const schema = ref.generateAttributeSchema(attribute, pupulatedRelations);
+          if (schema) {
+            return {
+              ...acc,
+              [key]:
+                ref.strict && attribute.required
+                  ? schema
+                  : schema.nullable().optional(),
+            };
+          }
+          return acc;
         } catch (error) {
-          console.error("Error generating attribute schema", error);
+          console.warn("Error generating attribute schema", error);
           return acc;
         }
       },

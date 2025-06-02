@@ -17,7 +17,7 @@ export function strapiLoader(
     load: async (context: LoaderContext): Promise<void> => {
       const { store, logger, parseData, generateDigest } = context;
 
-      logger.info(`[${contentType}] Loading data from Strapi`);
+      logger.info(`[${contentType}] Loading data from Strapi...`);
       const { url, token } = options;
       const response = await fetchContent({
         url,
@@ -51,7 +51,7 @@ export function strapiLoader(
         const digest = generateDigest(data);
         store.set({ id: data.documentId as string, data, digest });
       }
-      logger.info(`[${contentType}] Data loaded from Strapi`);
+      logger.info(`[${contentType}] Loading data from Strapi... DONE`);
     },
   };
 }
