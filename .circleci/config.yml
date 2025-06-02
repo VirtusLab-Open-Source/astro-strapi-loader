@@ -69,6 +69,10 @@ jobs:
           command: |
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
       - run:
+          name: Build
+          command: |
+            yarn build
+      - run:
           name: Publish package
           command: npm publish --tag latest
   deployBeta:
@@ -85,6 +89,10 @@ jobs:
           name: Configure NPM
           command: |
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+      - run:
+          name: Build
+          command: |
+            yarn build
       - run:
           name: Publish package
           command: npm publish --tag beta
