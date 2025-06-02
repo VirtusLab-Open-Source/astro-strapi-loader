@@ -71,8 +71,8 @@ export class StrapiSchemaGenerator {
       case "media":
         return z.object({
           name: z.string(),
-          alternativeText: z.string().optional(),
-          caption: z.string().optional(),
+          alternativeText: z.string().optional().nullable(),
+          caption: z.string().optional().nullable(),
           width: z.number().optional(),
           height: z.number().optional(),
           formats: z.any().nullable(),
@@ -81,7 +81,7 @@ export class StrapiSchemaGenerator {
           mime: z.string(),
           size: z.number(),
           url: z.string(),
-          previewUrl: z.string().optional(),
+          previewUrl: z.string().optional().nullable(),
           provider: z.string(),
           createdAt: z.string(),
           updatedAt: z.string(),

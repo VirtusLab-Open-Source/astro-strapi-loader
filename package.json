@@ -1,6 +1,6 @@
 {
   "name": "@sensinum/astro-strapi-loader",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Astro loader for Strapi CMS",
   "keywords": [
     "astro",
@@ -46,7 +46,8 @@
   ],
   "scripts": {
     "dev": "tsc --watch",
-    "build": "tsc",
+    "build": "yarn clean && tsc",
+    "clean": "rm -rf dist",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -57,7 +58,8 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "astro": "^5.0.0"
+    "astro": "^5.0.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@astrojs/ts-plugin": "^0.4.0",
@@ -75,7 +77,8 @@
     "typescript": "^5.0.0"
   },
   "peerDependencies": {
-    "astro": "^5.0.0"
+    "astro": "^5.0.0",
+    "zod": "^3.24.2"
   },
   "engines": {
     "node": ">=18.17.0",
