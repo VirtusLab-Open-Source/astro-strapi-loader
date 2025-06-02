@@ -1,17 +1,21 @@
-import type { Loader, LoaderContext } from 'astro/loaders';
-import qs from 'qs';
-import { fetchContent } from './strapi';
+import type { Loader, LoaderContext } from "astro/loaders";
+import qs from "qs";
+import { fetchContent } from "./strapi";
 
 export interface StrapiLoaderOptions {
   url: string;
   token?: string;
 }
 
-export function strapiLoader(contentType: string, options: StrapiLoaderOptions, query: Record<string, any> = {}): Loader {
+export function strapiLoader(
+  contentType: string,
+  options: StrapiLoaderOptions,
+  query: Record<string, unknown> = {},
+): Loader {
   return {
     name: "strapi-loader",
     load: async (context: LoaderContext): Promise<void> => {
-      const { store, logger, parseData, meta, generateDigest } = context;
+      const { store, logger, parseData, generateDigest } = context;
 
       logger.info(`[${contentType}] Loading data from Strapi`);
       const { url, token } = options;
@@ -29,17 +33,25 @@ export function strapiLoader(contentType: string, options: StrapiLoaderOptions, 
       }
 
       if (Array.isArray(response.data)) {
-        await Promise.all(response.data.map(async(item: Record<string, unknown>) => {
-          const data = await parseData({id: item.documentId as string, data: item});
-          const digest = generateDigest(data);
-          store.set({id: data.documentId as string, data, digest});
-        }));
+        await Promise.all(
+          response.data.map(async (item: Record<string, unknown>) => {
+            const data = await parseData({
+              id: item.documentId as string,
+              data: item,
+            });
+            const digest = generateDigest(data);
+            store.set({ id: data.documentId as string, data, digest });
+          }),
+        );
       } else {
-        const data = await parseData({id: response.data.documentId as string, data: response.data});
+        const data = await parseData({
+          id: response.data.documentId as string,
+          data: response.data,
+        });
         const digest = generateDigest(data);
-        store.set({id: data.documentId as string, data, digest});
+        store.set({ id: data.documentId as string, data, digest });
       }
       logger.info(`[${contentType}] Data loaded from Strapi`);
-    }
+    },
   };
 }

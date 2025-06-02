@@ -1,5 +1,5 @@
-import { z } from 'astro:content';
-import type { StrapiContentType, StrapiAttribute } from '../types/strapi';
+import { z } from "zod";
+import type { StrapiContentType, StrapiAttribute } from "../types/strapi";
 
 export class StrapiSchemaGenerator {
   private contentTypes: Array<StrapiContentType> = [];
@@ -10,10 +10,10 @@ export class StrapiSchemaGenerator {
     this.strict = strict;
   }
 
-  private generateAttributeSchema(attribute: StrapiAttribute): z.ZodType<any> {
+  private generateAttributeSchema(attribute: StrapiAttribute): z.ZodType<unknown> {
     const ref = this;
     switch (attribute.type) {
-      case 'string':
+      case "string":
         let schema = z.string();
         if (attribute.required) schema = schema.min(1);
         if (attribute.minLength) schema = schema.min(attribute.minLength);
@@ -21,53 +21,54 @@ export class StrapiSchemaGenerator {
         if (attribute.regex) schema = schema.regex(new RegExp(attribute.regex));
         return schema;
 
-      case 'text':
-      case 'richtext':
+      case "text":
+      case "richtext":
         return z.string();
 
-      case 'email':
+      case "email":
         return z.string().email();
 
-      case 'password':
+      case "password":
         return z.string();
 
-      case 'integer':
+      case "integer":
         let intSchema = z.number().int();
         if (attribute.required) intSchema = intSchema.min(1);
         if (attribute.min) intSchema = intSchema.min(attribute.min);
         if (attribute.max) intSchema = intSchema.max(attribute.max);
         return intSchema;
 
-      case 'biginteger':
-      case 'float':
-      case 'decimal':
+      case "biginteger":
+      case "float":
+      case "decimal":
         let numberSchema = z.number();
         if (attribute.required) numberSchema = numberSchema.min(0);
         if (attribute.min) numberSchema = numberSchema.min(attribute.min);
         if (attribute.max) numberSchema = numberSchema.max(attribute.max);
         return numberSchema;
 
-      case 'boolean':
+      case "boolean":
         return z.boolean();
 
-      case 'date':
-      case 'datetime':
+      case "date":
+      case "datetime":
         return z.string();
 
-      case 'time':
+      case "time":
         return z.string();
 
-      case 'timestamp':
+      case "timestamp":
         return z.number();
 
-      case 'json':
+      case "json":
         return z.any();
 
-      case 'enumeration':
-        if (!attribute.enum) throw new Error('Enumeration type requires enum values');
+      case "enumeration":
+        if (!attribute.enum)
+          throw new Error("Enumeration type requires enum values");
         return z.enum(attribute.enum as [string, ...string[]]).nullable();
 
-      case 'media':
+      case "media":
         return z.object({
           name: z.string(),
           alternativeText: z.string().optional(),
@@ -85,34 +86,41 @@ export class StrapiSchemaGenerator {
           createdAt: z.string(),
           updatedAt: z.string(),
         });
-      case 'relation':
-        if (!attribute.relation) throw new Error('Relation type requires relation target');
-        const targetType = ref.contentTypes.find((contentType) => contentType.apiID === attribute.relationTargetModel);
-        if (!targetType) throw new Error(`Target type ${attribute.relation} not found`);
+      case "relation":
+        if (!attribute.relation)
+          throw new Error("Relation type requires relation target");
+        const targetType = ref.contentTypes.find(
+          (contentType) => contentType.apiID === attribute.relationTargetModel,
+        );
+        if (!targetType)
+          throw new Error(`Target type ${attribute.relation} not found`);
 
         const relationSchema = ref.generateContentTypeSchema(targetType.schema);
 
         switch (attribute.relation) {
-          case 'oneToOne':
-          case 'manyToOne':
+          case "oneToOne":
+          case "manyToOne":
             return z.object({
               data: relationSchema.nullable(),
             });
-          case 'oneToMany':
-          case 'manyToMany':
+          case "oneToMany":
+          case "manyToMany":
             return z.object({
               data: z.array(relationSchema),
             });
           default:
-            throw new Error(`Unsupported relation type: ${attribute.relationType}`);
+            throw new Error(
+              `Unsupported relation type: ${attribute.relationType}`,
+            );
         }
 
-      case 'component':
-        if (!attribute.component) throw new Error('Component type requires component name');
+      case "component":
+        if (!attribute.component)
+          throw new Error("Component type requires component name");
         // TODO: Implement component schema generation
         return z.any();
 
-      case 'dynamiczone':
+      case "dynamiczone":
         // TODO: Implement dynamiczone schema generation
         return z.any();
 
@@ -121,31 +129,43 @@ export class StrapiSchemaGenerator {
     }
   }
 
-  private generateContentTypeSchema(contentTypeSchema: StrapiContentType['schema']): z.ZodObject<any> {
+  private generateContentTypeSchema(
+    contentTypeSchema: StrapiContentType["schema"],
+  ): z.ZodObject<any> {
     const ref = this;
-    const shape: Record<string, z.ZodTypeAny> = Object.entries(contentTypeSchema.attributes).reduce((acc, [key, attribute]) => {
-      try {
-        const schema = ref.generateAttributeSchema(attribute);
-        return {
-          ...acc,
-          [key]: ref.strict && attribute.required ? schema : schema.nullable().optional(),
-        };
-      } catch (error) {
-        console.error('Error generating attribute schema', error);
-        return acc;
-      }
-    }, {
-      id: z.number().optional(),
-      documentId: z.string().optional(),
-      createdAt: z.string().datetime().optional(),
-      updatedAt: z.string().datetime().optional(),
-    });
+    const shape: Record<string, z.ZodTypeAny> = Object.entries(
+      contentTypeSchema.attributes,
+    ).reduce(
+      (acc, [key, attribute]) => {
+        try {
+          const schema = ref.generateAttributeSchema(attribute);
+          return {
+            ...acc,
+            [key]:
+              ref.strict && attribute.required
+                ? schema
+                : schema.nullable().optional(),
+          };
+        } catch (error) {
+          console.error("Error generating attribute schema", error);
+          return acc;
+        }
+      },
+      {
+        id: z.number().optional(),
+        documentId: z.string().optional(),
+        createdAt: z.string().datetime().optional(),
+        updatedAt: z.string().datetime().optional(),
+      },
+    );
 
     return z.object(shape);
   }
 
   public generateSchema(contentTypeName: string): z.ZodObject<any> {
-    const contentType = this.contentTypes.find((contentType) => contentType.apiID === contentTypeName);
+    const contentType = this.contentTypes.find(
+      (contentType) => contentType.apiID === contentTypeName,
+    );
     if (!contentType) {
       throw new Error(`Content type ${contentTypeName} not found`);
     }
@@ -160,10 +180,11 @@ export class StrapiSchemaGenerator {
     ref.contentTypes.forEach((contentType) => {
       const { schema } = contentType;
       const { singularName, pluralName, kind } = schema;
-      const collectionName = kind === 'collectionType' ? pluralName : singularName;
+      const collectionName =
+        kind === "collectionType" ? pluralName : singularName;
       schemas[collectionName] = ref.generateContentTypeSchema(schema);
     });
 
     return schemas;
   }
-} 
+}

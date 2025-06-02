@@ -1,3 +1,3 @@
-export * from './loader';
-export * from './schema';
-export * from './strapi';
+export * from "./loader";
+export * from "./schema";
+export * from "./strapi";

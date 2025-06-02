@@ -1,1 +1,1 @@
-export * from './strapi';
+export * from "./strapi";

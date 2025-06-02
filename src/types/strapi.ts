@@ -16,7 +16,7 @@ export interface StrapiContentType {
   plugin?: string;
   schema: {
     uid: string;
-    kind: 'singleType' | 'collectionType';
+    kind: "singleType" | "collectionType";
     collectionName: string;
     singularName: string;
     pluralName: string;
@@ -31,7 +31,7 @@ export interface StrapiContentType {
       pluralName: string;
       displayName: string;
     };
-  }
+  };
 }
 
 export interface StrapiAttribute {
@@ -42,7 +42,7 @@ export interface StrapiAttribute {
   writable?: boolean;
   visible?: boolean;
   private?: boolean;
-  default?: any;
+  default?: unknown;
   minLength?: number;
   maxLength?: number;
   min?: number;
@@ -54,7 +54,7 @@ export interface StrapiAttribute {
   target?: string;
   targetAttribute?: string;
   relation?: string;
-  relationType?: 'oneToOne' | 'oneToMany' | 'manyToOne' | 'manyToMany';
+  relationType?: "oneToOne" | "oneToMany" | "manyToOne" | "manyToMany";
   relationTarget?: string;
   relationTargetAttribute?: string;
   relationTargetField?: string;
@@ -67,7 +67,7 @@ export interface StrapiAttribute {
   relationTargetModelFieldWritable?: boolean;
   relationTargetModelFieldVisible?: boolean;
   relationTargetModelFieldPrivate?: boolean;
-  relationTargetModelFieldDefault?: any;
+  relationTargetModelFieldDefault?: unknown;
   relationTargetModelFieldMinLength?: number;
   relationTargetModelFieldMaxLength?: number;
   relationTargetModelFieldMin?: number;
@@ -92,7 +92,7 @@ export interface StrapiAttribute {
   relationTargetModelFieldRelationTargetModelFieldWritable?: boolean;
   relationTargetModelFieldRelationTargetModelFieldVisible?: boolean;
   relationTargetModelFieldRelationTargetModelFieldPrivate?: boolean;
-  relationTargetModelFieldRelationTargetModelFieldDefault?: any;
+  relationTargetModelFieldRelationTargetModelFieldDefault?: unknown;
   relationTargetModelFieldRelationTargetModelFieldMinLength?: number;
   relationTargetModelFieldRelationTargetModelFieldMaxLength?: number;
   relationTargetModelFieldRelationTargetModelFieldMin?: number;
@@ -104,4 +104,4 @@ export interface StrapiAttribute {
   relationTargetModelFieldRelationTargetModelFieldTarget?: string;
   relationTargetModelFieldRelationTargetModelFieldTargetAttribute?: string;
   targetField?: string;
-} 
+}
