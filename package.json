@@ -8,9 +8,10 @@
     "cms",
     "loader",
     "content",
-    "api",
-    "headless",
-    "integration"
+    "astro-component",
+    "astro-loader",
+    "content-layer",
+    "astro-integration"
   ],
   "license": "MIT",
   "repository": {
