@@ -42,10 +42,6 @@ jobs:
           name: Test
           command: |
             yarn test:ci
-          environment:
-            JEST_JUNIT_OUTPUT_DIR: ./coverage/
-      - store_test_results:
-          path: ./coverage/
       - codecov/upload:
           flags: unittest
       - save_cache:
