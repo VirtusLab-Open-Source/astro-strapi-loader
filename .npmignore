@@ -20,7 +20,6 @@ __tests__
 *.spec.*
 
 # Build output
-dist
 .output
 
 # Environment files
