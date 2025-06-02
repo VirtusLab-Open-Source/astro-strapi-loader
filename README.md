@@ -138,11 +138,11 @@ const myCollection = await fetchContent({
 
 | Option | Type | Description | Documentation |
 |--------|------|-------------|---------------|
-| `filters` | `object` | Strapi Query Builder filters | [documentation](https://docs.strapi.io/cms/api/rest/filters) |
-| `populate` | `object / string[]` | Populating & selecting relations | [documentation](https://docs.strapi.io/cms/api/rest/populate-select#population) |
-| `fields` | `string[]` | Selecting fields | [documentation](https://docs.strapi.io/cms/api/rest/populate-select#field-selection) |
-| `sort` | `string[]` | Result sorting | [documentation](https://docs.strapi.io/cms/api/rest/sort-pagination#sorting) |
-| `pagination` | `object` | Result pagination | [documentation](https://docs.strapi.io/cms/api/rest/sort-pagination#pagination) |
+| `filters` | `object` | Strapi Query Builder filters | [open](https://docs.strapi.io/cms/api/rest/filters) |
+| `populate` | `object / string[]` | Populating & selecting relations | [open](https://docs.strapi.io/cms/api/rest/populate-select#population) |
+| `fields` | `string[]` | Selecting fields | [open](https://docs.strapi.io/cms/api/rest/populate-select#field-selection) |
+| `sort` | `string[]` | Result sorting | [open](https://docs.strapi.io/cms/api/rest/sort-pagination#sorting) |
+| `pagination` | `object` | Result pagination | [open](https://docs.strapi.io/cms/api/rest/sort-pagination#pagination) |
 
 ## 🔧 Development
 
