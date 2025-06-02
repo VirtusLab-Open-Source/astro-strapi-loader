@@ -48,7 +48,6 @@ jobs:
           path: ./coverage/
       - codecov/upload:
           flags: unittest
-          file: ./coverage/coverage-final.json
       - save_cache:
           paths:
             - ./node_modules
