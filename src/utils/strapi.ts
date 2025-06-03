@@ -12,8 +12,8 @@ export interface StrapiRequestOptions {
 }
 
 export interface StrapiCollectionsGeneratorOptions
-  extends StrapiRequestOptions {
-  strict?: boolean;
+  extends Omit<StrapiRequestOptions, "path"> {
+    strict?: boolean;
 }
 
 export interface StrapiCollection {
