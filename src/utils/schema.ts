@@ -1,12 +1,14 @@
 import { z } from "zod";
-import type { StrapiContentType, StrapiAttribute } from "../types/strapi";
+import type { StrapiComponent, StrapiContentType, StrapiAttribute } from "../types/strapi";
 
 export class StrapiSchemaGenerator {
   private contentTypes: Array<StrapiContentType> = [];
+  private components: Array<StrapiComponent> = [];
   private strict: boolean = false;
 
-  constructor(contentTypes: Array<StrapiContentType>, strict: boolean = false) {
+  constructor(contentTypes: Array<StrapiContentType>, components: Array<StrapiComponent>, strict: boolean = false) {
     this.contentTypes = contentTypes;
+    this.components = components;
     this.strict = strict;
   }
 
@@ -123,8 +125,16 @@ export class StrapiSchemaGenerator {
       case "component":
         if (!attribute.component)
           throw new Error("Component type requires component name");
-        // TODO: Implement component schema generation
-        return z.any();
+        const component = this.components.find(
+          (component) => component.uid === attribute.component,
+        );
+        if (!component)
+          throw new Error(`Component ${attribute.component} not found`);
+
+        if (attribute.repeatable) {
+          return z.array(this.generateComponentSchema(component.schema));
+        }
+        return this.generateComponentSchema(component.schema);
 
       case "dynamiczone":
         // TODO: Implement dynamiczone schema generation
@@ -168,6 +178,16 @@ export class StrapiSchemaGenerator {
         updatedAt: z.string().datetime().optional(),
       },
     );
+
+    return z.object(shape);
+  }
+
+  private generateComponentSchema(componentSchema: StrapiComponent["schema"]): z.ZodObject<any> {
+    const ref = this;
+    const shape: Record<string, z.ZodTypeAny> = Object.entries(componentSchema.attributes).reduce((acc, [key, attribute]) => {
+      const schema = ref.generateAttributeSchema(attribute);
+      return { ...acc, [key]: schema };
+    }, {});
 
     return z.object(shape);
   }
