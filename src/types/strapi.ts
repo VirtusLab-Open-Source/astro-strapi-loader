@@ -34,6 +34,19 @@ export interface StrapiContentType {
   };
 }
 
+export interface StrapiComponent {
+  uid: string;
+  category: string;
+  apiId: string;
+  schema: {
+    displayName: string;
+    description: string;
+    icon: string;
+    collectionName: string;
+    attributes: Array<StrapiAttribute>;
+  }
+}
+
 export interface StrapiAttribute {
   type: string;
   required?: boolean;

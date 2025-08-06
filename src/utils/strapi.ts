@@ -1,6 +1,6 @@
 import { z, defineCollection, CollectionConfig } from "astro:content";
 
-import type { StrapiContentType, StrapiResponse } from "../types/strapi";
+import type { StrapiComponent, StrapiContentType, StrapiResponse } from "../types/strapi";
 import { StrapiSchemaGenerator } from "./schema";
 import { strapiLoader } from "./loader";
 
@@ -55,6 +55,18 @@ export async function fetchContentTypes(
   return contentTypes.data.filter((contentType) => !contentType.plugin);
 }
 
+export async function fetchComponents(
+  options: Omit<StrapiRequestOptions, "path">,
+): Promise<Array<StrapiComponent>> {
+  const components = await strapiRequest<
+    StrapiResponse<Array<StrapiComponent>>
+  >({
+    ...options,
+    path: "content-type-builder/components",
+  });
+  return components.data;
+}
+
 export async function fetchContent(
   options: Omit<StrapiRequestOptions, "path"> & { contentType: string },
 ): Promise<any> {
@@ -73,7 +85,8 @@ export async function generateStrapiSchema(
   const { url, token, strict } = options;
 
   const contentTypes = await fetchContentTypes({ url, token });
-  const schemaGenerator = new StrapiSchemaGenerator(contentTypes, strict);
+  const components = await fetchComponents({ url, token });
+  const schemaGenerator = new StrapiSchemaGenerator(contentTypes, components, strict);
   return schemaGenerator.generateAllSchemas();
 }
 

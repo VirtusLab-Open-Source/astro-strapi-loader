@@ -35,7 +35,7 @@ describe("StrapiSchemaGenerator", () => {
   let generator: StrapiSchemaGenerator;
 
   beforeEach(() => {
-    generator = new StrapiSchemaGenerator([mockContentType]);
+    generator = new StrapiSchemaGenerator([mockContentType], []);
   });
 
   describe("generateSchema", () => {
