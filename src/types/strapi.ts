@@ -43,7 +43,7 @@ export interface StrapiComponent {
     description: string;
     icon: string;
     collectionName: string;
-    attributes: Array<StrapiAttribute>;
+    attributes: Record<string, StrapiAttribute>;
   }
 }
 
