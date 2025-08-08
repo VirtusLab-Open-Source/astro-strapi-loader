@@ -14,32 +14,32 @@ export class StrapiSchemaGenerator {
 
   private generateAttributeSchema(attribute: StrapiAttribute, pupulatedRelations: Array<string> = []): z.ZodType<unknown> | null {
     const ref = this;
+    let schema;
     switch (attribute.type) {
       case "string":
-        let schema = z.string();
+        schema = z.string();
         if (attribute.required) schema = schema.min(1);
         if (attribute.minLength) schema = schema.min(attribute.minLength);
         if (attribute.maxLength) schema = schema.max(attribute.maxLength);
         if (attribute.regex) schema = schema.regex(new RegExp(attribute.regex));
-        return schema;
-
+        break;
       case "text":
       case "richtext":
-        return z.string();
-
+        schema = z.string();
+        break;
       case "email":
-        return z.string().email();
-
+        schema = z.string().email();
+        break;
       case "password":
-        return z.string();
-
+        schema = z.string();
+        break;
       case "integer":
         let intSchema = z.number().int();
         if (attribute.required) intSchema = intSchema.min(1);
         if (attribute.min) intSchema = intSchema.min(attribute.min);
         if (attribute.max) intSchema = intSchema.max(attribute.max);
-        return intSchema;
-
+        schema = intSchema;
+        break;
       case "biginteger":
       case "float":
       case "decimal":
@@ -47,31 +47,31 @@ export class StrapiSchemaGenerator {
         if (attribute.required) numberSchema = numberSchema.min(0);
         if (attribute.min) numberSchema = numberSchema.min(attribute.min);
         if (attribute.max) numberSchema = numberSchema.max(attribute.max);
-        return numberSchema;
-
+        schema = numberSchema;
+        break;
       case "boolean":
-        return z.boolean();
-
+        schema = z.boolean();
+        break;
       case "date":
       case "datetime":
-        return z.string();
-
+        schema = z.string();
+        break;
       case "time":
-        return z.string();
-
+        schema = z.string();
+        break;
       case "timestamp":
-        return z.number();
-
+        schema = z.number();
+        break;
       case "json":
-        return z.any();
-
+        schema = z.any();
+        break;
       case "enumeration":
         if (!attribute.enum)
           throw new Error("Enumeration type requires enum values");
-        return z.enum(attribute.enum as [string, ...string[]]).nullable();
-
+        schema = z.enum(attribute.enum as [string, ...string[]]).nullable();
+        break;
       case "media":
-        return z.object({
+        schema = z.object({
           name: z.string(),
           alternativeText: z.string().optional().nullable(),
           caption: z.string().optional().nullable(),
@@ -88,6 +88,7 @@ export class StrapiSchemaGenerator {
           createdAt: z.string(),
           updatedAt: z.string(),
         });
+        break;
       case "relation":
         if (!attribute.relation)
           throw new Error("Relation type requires relation target");
@@ -112,16 +113,18 @@ export class StrapiSchemaGenerator {
         switch (attribute.relation) {
           case "oneToOne":
           case "manyToOne":
-            return relationSchema;
+            schema = relationSchema;
+            break;
           case "oneToMany":
           case "manyToMany":
-            return z.array(relationSchema);
+            schema = z.array(relationSchema);
+            break;
           default:
             throw new Error(
               `Unsupported relation type: ${attribute.relationType}`,
             );
         }
-
+        break;
       case "component":
         if (!attribute.component)
           throw new Error("Component type requires component name");
@@ -132,17 +135,23 @@ export class StrapiSchemaGenerator {
           throw new Error(`Component ${attribute.component} not found`);
 
         if (attribute.repeatable) {
-          return z.array(this.generateComponentSchema(component.schema));
+          schema = z.array(this.generateComponentSchema(component.schema));
+        } else {
+          schema = this.generateComponentSchema(component.schema);
         }
-        return this.generateComponentSchema(component.schema);
-
+        break;
       case "dynamiczone":
         // TODO: Implement dynamiczone schema generation
-        return z.any();
-
+        schema = z.any();
+        break;
       default:
-        return z.any();
+        schema = z.any();
+        break;
     }
+    if (attribute.conditions && (attribute.type !== "media")) {
+      schema = schema.nullable().optional();
+    }
+    return schema;
   }
 
   private generateContentTypeSchema(
@@ -160,7 +169,7 @@ export class StrapiSchemaGenerator {
             return {
               ...acc,
               [key]:
-                ref.strict && attribute.required
+                ref.strict && attribute.required && !attribute.conditions
                   ? schema
                   : schema.nullable().optional(),
             };
@@ -186,7 +195,7 @@ export class StrapiSchemaGenerator {
     const ref = this;
     const shape: Record<string, z.ZodTypeAny> = Object.entries(componentSchema.attributes).reduce((acc, [key, attribute]) => {
       const schema = ref.generateAttributeSchema(attribute);
-      return { ...acc, [key]: schema };
+      return { ...acc, [key]: ref.strict && attribute.required && !attribute.conditions ? schema : schema?.nullable().optional() };
     }, {});
 
     return z.object(shape);
