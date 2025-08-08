@@ -63,6 +63,7 @@ export interface StrapiAttribute {
   regex?: string;
   enum?: string[];
   component?: string;
+  conditions?: Record<string, unknown>;
   repeatable?: boolean;
   target?: string;
   targetAttribute?: string;
