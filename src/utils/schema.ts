@@ -148,8 +148,8 @@ export class StrapiSchemaGenerator {
         schema = z.any();
         break;
     }
-    if (attribute.conditions) {
-      schema = schema.nullable();
+    if (attribute.conditions && (attribute.type !== "media")) {
+      schema = schema.nullable().optional();
     }
     return schema;
   }
@@ -169,7 +169,7 @@ export class StrapiSchemaGenerator {
             return {
               ...acc,
               [key]:
-                ref.strict && attribute.required
+                ref.strict && attribute.required && !attribute.conditions
                   ? schema
                   : schema.nullable().optional(),
             };
@@ -195,7 +195,7 @@ export class StrapiSchemaGenerator {
     const ref = this;
     const shape: Record<string, z.ZodTypeAny> = Object.entries(componentSchema.attributes).reduce((acc, [key, attribute]) => {
       const schema = ref.generateAttributeSchema(attribute);
-      return { ...acc, [key]: schema };
+      return { ...acc, [key]: ref.strict && attribute.required && !attribute.conditions ? schema : schema?.nullable().optional() };
     }, {});
 
     return z.object(shape);
