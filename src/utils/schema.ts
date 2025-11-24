@@ -71,7 +71,7 @@ export class StrapiSchemaGenerator {
         schema = z.enum(attribute.enum as [string, ...string[]]).nullable();
         break;
       case "media":
-        schema = z.object({
+        const mediaSchema = z.object({
           name: z.string(),
           alternativeText: z.string().optional().nullable(),
           caption: z.string().optional().nullable(),
@@ -88,6 +88,7 @@ export class StrapiSchemaGenerator {
           createdAt: z.string(),
           updatedAt: z.string(),
         });
+        schema = attribute.multiple ? z.array(mediaSchema) : mediaSchema;
         break;
       case "relation":
         if (!attribute.relation)

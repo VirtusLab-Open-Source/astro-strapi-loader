@@ -457,12 +457,90 @@ describe("StrapiSchemaGenerator", () => {
     });
 
     describe("media type", () => {
-      it("should generate media schema", () => {
+      it("should generate media schema for single media", () => {
         const contentType = createContentTypeWithAttribute("image", { type: "media" });
         const testGenerator = new StrapiSchemaGenerator([contentType], []);
         const schema = testGenerator.generateSchema("test");
         
         expect(schema.shape).toHaveProperty("image");
+      });
+
+      it("should generate media schema for multiple media files", () => {
+        const contentType = createContentTypeWithAttribute("mediaGallery", { 
+          type: "media",
+          multiple: true
+        });
+        const testGenerator = new StrapiSchemaGenerator([contentType], []);
+        const schema = testGenerator.generateSchema("test");
+        
+        expect(schema.shape).toHaveProperty("mediaGallery");
+      });
+
+      it("should generate array schema when multiple is true", () => {
+        const contentType = createContentTypeWithAttribute("gallery", { 
+          type: "media",
+          multiple: true
+        });
+        const testGenerator = new StrapiSchemaGenerator([contentType], []);
+        const schema = testGenerator.generateSchema("test");
+        
+        // Verify the schema accepts arrays
+        const testData = {
+          gallery: [
+            {
+              name: "image1.jpg",
+              hash: "hash1",
+              mime: "image/jpeg",
+              size: 1024,
+              url: "/uploads/image1.jpg",
+              provider: "local",
+              createdAt: "2025-01-01T00:00:00.000Z",
+              updatedAt: "2025-01-01T00:00:00.000Z",
+              formats: null,
+            },
+            {
+              name: "image2.jpg",
+              hash: "hash2",
+              mime: "image/jpeg",
+              size: 2048,
+              url: "/uploads/image2.jpg",
+              provider: "local",
+              createdAt: "2025-01-01T00:00:00.000Z",
+              updatedAt: "2025-01-01T00:00:00.000Z",
+              formats: null,
+            }
+          ]
+        };
+        
+        const result = schema.safeParse(testData);
+        expect(result.success).toBe(true);
+      });
+
+      it("should generate object schema when multiple is false or undefined", () => {
+        const contentType = createContentTypeWithAttribute("featuredImage", { 
+          type: "media",
+          multiple: false
+        });
+        const testGenerator = new StrapiSchemaGenerator([contentType], []);
+        const schema = testGenerator.generateSchema("test");
+        
+        // Verify the schema accepts single object
+        const testData = {
+          featuredImage: {
+            name: "image.jpg",
+            hash: "hash1",
+            mime: "image/jpeg",
+            size: 1024,
+            url: "/uploads/image.jpg",
+            provider: "local",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            updatedAt: "2025-01-01T00:00:00.000Z",
+            formats: null,
+          }
+        };
+        
+        const result = schema.safeParse(testData);
+        expect(result.success).toBe(true);
       });
     });
 
