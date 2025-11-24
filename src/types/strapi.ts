@@ -65,6 +65,7 @@ export interface StrapiAttribute {
   component?: string;
   conditions?: Record<string, unknown>;
   repeatable?: boolean;
+  multiple?: boolean;
   target?: string;
   targetAttribute?: string;
   relation?: string;
