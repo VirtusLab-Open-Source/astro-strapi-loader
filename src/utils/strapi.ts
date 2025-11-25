@@ -1,4 +1,5 @@
-import { z, defineCollection, CollectionConfig } from "astro:content";
+import { z, defineCollection } from "astro:content";
+import type { CollectionConfig } from "astro/content/config";
 
 import type { StrapiComponent, StrapiContentType, StrapiResponse } from "../types/strapi";
 import { StrapiSchemaGenerator } from "./schema";
