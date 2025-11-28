@@ -19,7 +19,23 @@ export interface StrapiCollectionsGeneratorOptions
 
 export interface StrapiCollection {
   name: string;
-  query: Record<string, any>;
+  query?: Record<string, any>;
+  /**
+   * Custom name for the collection. Allows multiple collections from the same endpoint.
+   */
+  collectionName?: string;
+  /**
+   * Custom function to generate ID from item data.
+   * Default: uses documentId field.
+   */
+  idGenerator?: (data: Record<string, unknown>) => string;
+  /**
+   * Locale configuration:
+   * - undefined: no locale parameter (default behavior)
+   * - string: single locale (e.g., 'en')
+   * - string[]: multiple locales (e.g., ['en', 'de']) - returns structure like { 'en': items, 'de': items }
+   */
+  locale?: string | string[];
 }
 
 async function strapiRequest<T>(options: StrapiRequestOptions): Promise<T> {
@@ -95,10 +111,17 @@ export function generateCollection(
   contentType: string,
   schema: z.ZodObject<any>,
   options: StrapiCollectionsGeneratorOptions,
-  query: Record<string, any> = {},
+  collectionConfig: Partial<StrapiCollection> = {},
 ): CollectionConfig<any> {
+  const { query = {}, collectionName, idGenerator, locale } = collectionConfig;
+  const loaderOptions = {
+    ...options,
+    collectionName,
+    idGenerator,
+    locale,
+  };
   return defineCollection({
-    loader: strapiLoader(contentType, options, query),
+    loader: strapiLoader(contentType, loaderOptions, query),
     schema,
   });
 }
@@ -124,17 +147,21 @@ export async function generateCollections(
   const collections = demandedCollections.reduce(
     (acc, collection: string) => {
       const reqCollection = reqCollections.find((rc) =>
-        typeof rc === "string" ? rc : rc.name === collection,
+        typeof rc === "string" ? rc === collection : rc.name === collection,
       ) as StrapiCollection | undefined;
-      const query =
-        typeof reqCollection === "string" ? {} : reqCollection?.query || {};
+      
+      const collectionConfig: Partial<StrapiCollection> =
+        typeof reqCollection === "string" ? {} : reqCollection || {};
+      
+      const collectionKey = collectionConfig.collectionName || collection;
+      
       return {
         ...acc,
-        [collection]: generateCollection(
+        [collectionKey]: generateCollection(
           collection,
           schema[collection],
           options,
-          query,
+          collectionConfig,
         ),
       };
     },
