@@ -37,7 +37,7 @@ describe("strapiLoader - Extended Features", () => {
   });
 
   describe("Custom ID Generator", () => {
-    it("powinien używać niestandardowego generatora ID", async () => {
+    it("should use custom ID generator", async () => {
       const mockData = [
         { documentId: "1", slug: "test-slug-1", title: "Test Title 1" },
         { documentId: "2", slug: "test-slug-2", title: "Test Title 2" },
@@ -63,7 +63,7 @@ describe("strapiLoader - Extended Features", () => {
       });
     });
 
-    it("powinien używać złożonego generatora ID", async () => {
+    it("should use complex ID generator", async () => {
       const mockData = [
         { documentId: "1", category: "blog", slug: "post-1" },
       ];
@@ -84,7 +84,7 @@ describe("strapiLoader - Extended Features", () => {
       });
     });
 
-    it("powinien działać dla pojedynczego elementu z niestandardowym ID", async () => {
+    it("should work for single item with custom ID", async () => {
       const mockData = {
         documentId: "1",
         slug: "single-page",
@@ -108,7 +108,7 @@ describe("strapiLoader - Extended Features", () => {
   });
 
   describe("Custom Collection Name", () => {
-    it("powinien używać niestandardowej nazwy kolekcji", async () => {
+    it("should use custom collection name", async () => {
       const mockData = [
         { documentId: "1", title: "Test Title 1" },
       ];
@@ -130,7 +130,7 @@ describe("strapiLoader - Extended Features", () => {
       );
     });
 
-    it("powinien używać domyślnej nazwy gdy collectionName nie jest podane", async () => {
+    it("should use default name when collectionName is not provided", async () => {
       const mockData = [
         { documentId: "1", title: "Test Title 1" },
       ];
@@ -146,7 +146,7 @@ describe("strapiLoader - Extended Features", () => {
   });
 
   describe("Locale Support", () => {
-    it("powinien obsłużyć pojedynczą locale", async () => {
+    it("should handle single locale", async () => {
       const mockData = [
         { documentId: "en-1", title: "English Title", locale: "en" },
         { documentId: "en-2", title: "English Title 2", locale: "en" },
@@ -184,7 +184,7 @@ describe("strapiLoader - Extended Features", () => {
       });
     });
 
-    it("powinien obsłużyć wiele lokalizacji", async () => {
+    it("should handle multiple locales", async () => {
       const mockDataEN = [
         { documentId: "doc1", title: "English Title", locale: "en" },
       ];
@@ -230,7 +230,7 @@ describe("strapiLoader - Extended Features", () => {
       });
     });
 
-    it("powinien obsłużyć wiele lokalizacji z pustą odpowiedzią dla jednej", async () => {
+    it("should handle multiple locales with empty response for one", async () => {
       const mockDataEN = [
         { documentId: "doc2", title: "English Title", locale: "en" },
       ];
@@ -255,7 +255,7 @@ describe("strapiLoader - Extended Features", () => {
       });
     });
 
-    it("powinien obsłużyć wiele lokalizacji dla pojedynczego typu", async () => {
+    it("should handle multiple locales for single type", async () => {
       const mockDataEN = { documentId: "home1", title: "English Title", locale: "en" };
       const mockDataDE = { documentId: "home1", title: "German Title", locale: "de" };
 
@@ -283,7 +283,7 @@ describe("strapiLoader - Extended Features", () => {
       });
     });
 
-    it("powinien obsłużyć sytuację gdy wszystkie lokalizacje są puste", async () => {
+    it("should handle situation when all locales are empty", async () => {
       (fetchContent as jest.Mock)
         .mockResolvedValueOnce({ data: [] })
         .mockResolvedValueOnce({ data: [] });
@@ -300,7 +300,7 @@ describe("strapiLoader - Extended Features", () => {
       );
     });
 
-    it("powinien łączyć locale z innymi parametrami zapytania", async () => {
+    it("should combine locale with other query parameters", async () => {
       const mockData = [
         { documentId: "pub1", title: "Published Title", locale: "en" },
       ];
@@ -328,7 +328,7 @@ describe("strapiLoader - Extended Features", () => {
   });
 
   describe("Combined Features", () => {
-    it("powinien działać z niestandardowym ID, nazwą kolekcji i locale", async () => {
+    it("should work with custom ID, collection name and locale", async () => {
       const mockDataEN = [
         { documentId: "about-en", slug: "about", title: "About Us" },
       ];
@@ -365,7 +365,7 @@ describe("strapiLoader - Extended Features", () => {
       });
     });
 
-    it("powinien działać z niestandardowym ID i pojedynczą locale", async () => {
+    it("should work with custom ID and single locale", async () => {
       const mockData = [
         { documentId: "post-doc-1", slug: "post-1", title: "Post 1" },
       ];
@@ -393,7 +393,7 @@ describe("strapiLoader - Extended Features", () => {
   });
 
   describe("Backward Compatibility", () => {
-    it("powinien działać bez nowych opcji (kompatybilność wsteczna)", async () => {
+    it("should work without new options (backward compatible)", async () => {
       const mockData = [
         { documentId: "bc-1", title: "Test Title 1" },
         { documentId: "bc-2", title: "Test Title 2" },

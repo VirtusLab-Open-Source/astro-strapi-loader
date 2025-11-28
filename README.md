@@ -73,13 +73,16 @@ try {
     url: import.meta.env.STRAPI_URL,
     token: import.meta.env.STRAPI_TOKEN,
   }, [{ // leave empty [] to fetch all the collections based on default Strapi settings
-    name: "my-collection",
+    name: "homepage",
     query: {
-      populate: {
-        // ...
-      },
+      populate: { seo: true },
     },
-  }, 'yet-another-collection']);
+  }, {
+    name: "layout",
+    query: {
+      populate: { header: true, footer: true },
+    },
+  }, 'simple-collection-name']); // Can also pass just strings
 } catch (error) {
   console.error(error);
 }
@@ -88,6 +91,8 @@ export const collections = {
     ...strapiCollections,
 };
 ```
+
+> **✅ Backward Compatible:** Existing code works without any changes!
 
 2. Use in your Astro component:
 
@@ -140,11 +145,86 @@ const myCollection = await fetchContent({
 
 > **⚠️ Note:** The token must have **read access** to both the **Content API** and the **Content-Type Builder API** *(ONLY to the "Get Content Types" endpoint)*.
 
+### Mixing 1.0.x and 1.1.0+
+
+You can mix old (simple) and new (extended) format in a single `generateCollections` call:
+
+```typescript
+strapiCollections = await generateCollections({
+  url: import.meta.env.STRAPI_URL,
+  token: import.meta.env.STRAPI_TOKEN,
+}, [
+  // ✅ Old format - works as before
+  {
+    name: "homepage",
+    query: { populate: { seo: true } }
+  },
+  {
+    name: "layout",
+    query: { populate: { header: true, footer: true } }
+  },
+  
+  // ✅ 1.1.0+ - with locale support
+  {
+    name: "pages",
+    collectionName: "pagesEN",
+    locale: "en",
+    query: { sort: ['publishedAt:desc'] }
+  },
+  {
+    name: "pages",  // Same endpoint, different config!
+    collectionName: "pagesDE",
+    locale: "de",
+    query: { sort: ['publishedAt:desc'] }
+  },
+  
+  // ✅ 1.1.0+ - with custom ID
+  {
+    name: "blog-posts",
+    idGenerator: (data) => data.slug as string,
+    query: { filters: { published: true } }
+  },
+  
+  // ✅ 1.1.0+ - combining all features
+  {
+    name: "articles",
+    collectionName: "articlesMultilang",
+    locale: ["en", "de", "fr"],
+    idGenerator: (data) => data.slug as string
+  }
+]);
+
+// Result collections:
+// - homepage (old format)
+// - layout (old format)
+// - pagesEN (1.1.0+)
+// - pagesDE (1.1.0+)
+// - blog-posts (1.1.0+)
+// - articlesMultilang (1.1.0+)
+```
+
 ### Advanced Usage Examples
 
 #### Custom ID Generation
 
 Use slugs or custom fields as collection IDs instead of Strapi's `documentId`:
+
+**Option A:** Using `generateCollections`:
+
+```typescript
+strapiCollections = await generateCollections({
+  url: import.meta.env.STRAPI_URL,
+  token: import.meta.env.STRAPI_TOKEN,
+}, [{
+  name: "pages",
+  idGenerator: (data) => data.slug as string,
+  query: { populate: { seo: true } }
+}]);
+
+// Now you can use: getEntry('pages', 'about-us')
+```
+
+**Option B:** Using `strapiLoader` directly:
 
 ```typescript
 import { strapiLoader } from '@sensinum/astro-strapi-loader';
@@ -162,13 +242,32 @@ const pages = defineCollection({
     content: z.string()
   })
 });
-
-// Now you can use: getEntry('pages', 'about-us')
 ```
 
 #### Multiple Collections from Same Endpoint
 
-Create separate collections for different languages from the same Strapi content type:
+**Option A:** Using `generateCollections` (recommended for multiple collections):
+
+```typescript
+strapiCollections = await generateCollections({
+  url: import.meta.env.STRAPI_URL,
+  token: import.meta.env.STRAPI_TOKEN,
+}, [{
+  name: "pages",
+  collectionName: "pagesEN",
+  locale: "en",
+  query: { sort: ['publishedAt:desc'] }
+}, {
+  name: "pages",  // Same endpoint!
+  collectionName: "pagesDE",
+  locale: "de",
+  query: { sort: ['publishedAt:desc'] }
+}]);
+
+// Now you have both 'pagesEN' and 'pagesDE' collections
+```
+
+**Option B:** Using `strapiLoader` directly:
 
 ```typescript
 const pagesEN = defineCollection({

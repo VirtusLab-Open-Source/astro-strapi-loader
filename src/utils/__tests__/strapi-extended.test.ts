@@ -29,7 +29,7 @@ describe("Strapi Extended Features", () => {
       title: z.string(),
     });
 
-    it("powinien utworzyć kolekcję z niestandardową nazwą", () => {
+    it("should create collection with custom name", () => {
       const collection = generateCollection(
         "pages",
         testSchema,
@@ -45,7 +45,7 @@ describe("Strapi Extended Features", () => {
       );
     });
 
-    it("powinien utworzyć kolekcję z niestandardowym generatorem ID", () => {
+    it("should create collection with custom ID generator", () => {
       const idGenerator = (data: Record<string, unknown>) => data.slug as string;
       const collection = generateCollection(
         "pages",
@@ -62,7 +62,7 @@ describe("Strapi Extended Features", () => {
       );
     });
 
-    it("powinien utworzyć kolekcję z pojedynczą locale", () => {
+    it("should create collection with single locale", () => {
       const collection = generateCollection(
         "pages",
         testSchema,
@@ -78,7 +78,7 @@ describe("Strapi Extended Features", () => {
       );
     });
 
-    it("powinien utworzyć kolekcję z wieloma locale", () => {
+    it("should create collection with multiple locales", () => {
       const collection = generateCollection(
         "pages",
         testSchema,
@@ -94,7 +94,7 @@ describe("Strapi Extended Features", () => {
       );
     });
 
-    it("powinien utworzyć kolekcję ze wszystkimi opcjami", () => {
+    it("should create collection with all options", () => {
       const idGenerator = (data: Record<string, unknown>) => data.slug as string;
       const collection = generateCollection(
         "pages",
@@ -120,7 +120,7 @@ describe("Strapi Extended Features", () => {
       );
     });
 
-    it("powinien utworzyć kolekcję bez dodatkowych opcji (kompatybilność wsteczna)", () => {
+    it("should create collection without additional options (backward compatible)", () => {
       const collection = generateCollection(
         "pages",
         testSchema,
@@ -137,7 +137,27 @@ describe("Strapi Extended Features", () => {
   });
 
   describe("StrapiCollection Interface", () => {
-    it("powinien akceptować konfigurację z wszystkimi nowymi polami", () => {
+    it("should accept old format (backward compatibility)", () => {
+      // Old format still works
+      const collection: import("../strapi").StrapiCollection = {
+        name: "homepage",
+        query: { 
+          populate: { seo: true },
+          filters: { published: true }
+        },
+      };
+
+      expect(collection.name).toBe("homepage");
+      expect(collection.query).toEqual({ 
+        populate: { seo: true },
+        filters: { published: true }
+      });
+      expect(collection.collectionName).toBeUndefined();
+      expect(collection.idGenerator).toBeUndefined();
+      expect(collection.locale).toBeUndefined();
+    });
+
+    it("should accept configuration with all new fields", () => {
       const idGenerator = (data: Record<string, unknown>) => data.slug as string;
       
       const collection: import("../strapi").StrapiCollection = {
@@ -154,7 +174,7 @@ describe("Strapi Extended Features", () => {
       expect(collection.idGenerator).toBe(idGenerator);
     });
 
-    it("powinien akceptować konfigurację z pojedynczą locale jako string", () => {
+    it("should accept configuration with single locale as string", () => {
       const collection: import("../strapi").StrapiCollection = {
         name: "pages",
         locale: "en",
@@ -163,7 +183,7 @@ describe("Strapi Extended Features", () => {
       expect(collection.locale).toBe("en");
     });
 
-    it("powinien akceptować minimalną konfigurację (kompatybilność wsteczna)", () => {
+    it("should accept minimal configuration (backward compatible)", () => {
       const collection: import("../strapi").StrapiCollection = {
         name: "pages",
       };
@@ -177,7 +197,7 @@ describe("Strapi Extended Features", () => {
   });
 
   describe("Multiple Collections from Same Endpoint", () => {
-    it("powinien pozwolić na utworzenie wielu kolekcji z tego samego endpointu", () => {
+    it("should allow creating multiple collections from same endpoint", () => {
       const testSchema = z.object({
         documentId: z.string(),
         title: z.string(),
@@ -217,7 +237,7 @@ describe("Strapi Extended Features", () => {
       );
     });
 
-    it("powinien pozwolić na różne generatory ID dla różnych kolekcji", () => {
+    it("should allow different ID generators for different collections", () => {
       const testSchema = z.object({
         documentId: z.string(),
         slug: z.string(),
@@ -263,7 +283,7 @@ describe("Strapi Extended Features", () => {
   });
 
   describe("Locale Query Parameter Handling", () => {
-    it("powinien przekazać locale do loadera", () => {
+    it("should pass locale to loader", () => {
       const testSchema = z.object({
         documentId: z.string(),
         title: z.string(),
@@ -287,7 +307,7 @@ describe("Strapi Extended Features", () => {
       );
     });
 
-    it("powinien przekazać tablicę locales do loadera", () => {
+    it("should pass array of locales to loader", () => {
       const testSchema = z.object({
         documentId: z.string(),
         title: z.string(),
@@ -311,8 +331,144 @@ describe("Strapi Extended Features", () => {
     });
   });
 
+  describe("Backward Compatibility with generateCollections", () => {
+    it("should work with classic array of objects format", () => {
+      const testSchema = z.object({
+        documentId: z.string(),
+        title: z.string(),
+      });
+
+      // Simulate old usage pattern
+      const homepageQuery = { populate: { seo: true } };
+      const layoutQuery = { populate: { header: true, footer: true } };
+
+      const homepage = generateCollection(
+        "homepage",
+        testSchema,
+        mockOptions,
+        { name: "homepage", query: homepageQuery }
+      );
+
+      const layout = generateCollection(
+        "layout",
+        testSchema,
+        mockOptions,
+        { name: "layout", query: layoutQuery }
+      );
+
+      expect(homepage).toBeDefined();
+      expect(layout).toBeDefined();
+      
+      // Verify queries are passed correctly
+      expect(mockStrapiLoader).toHaveBeenCalledWith(
+        "homepage",
+        expect.objectContaining({ url: mockOptions.url }),
+        homepageQuery
+      );
+      expect(mockStrapiLoader).toHaveBeenCalledWith(
+        "layout",
+        expect.objectContaining({ url: mockOptions.url }),
+        layoutQuery
+      );
+    });
+
+    it("should allow mixing old and new format in single call", () => {
+      const testSchema = z.object({
+        documentId: z.string(),
+        title: z.string(),
+        slug: z.string().optional(),
+      });
+
+      const idGenerator = (data: Record<string, unknown>) => data.slug as string;
+
+      // Mix old and new formats
+      const collections = [
+        // Old format - just name and query
+        generateCollection(
+          "homepage",
+          testSchema,
+          mockOptions,
+          { name: "homepage", query: { populate: { seo: true } } }
+        ),
+        // New format with locale
+        generateCollection(
+          "pages",
+          testSchema,
+          mockOptions,
+          { 
+            name: "pages", 
+            collectionName: "pagesEN",
+            locale: "en",
+            query: { sort: ['publishedAt:desc'] }
+          }
+        ),
+        // New format with custom ID
+        generateCollection(
+          "blog-posts",
+          testSchema,
+          mockOptions,
+          { 
+            name: "blog-posts",
+            idGenerator,
+            query: { filters: { published: true } }
+          }
+        ),
+        // New format with all features
+        generateCollection(
+          "articles",
+          testSchema,
+          mockOptions,
+          { 
+            name: "articles",
+            collectionName: "articlesDE",
+            locale: ["de", "fr"],
+            idGenerator,
+          }
+        ),
+      ];
+
+      // All should be defined
+      expect(collections[0]).toBeDefined(); // homepage - old format
+      expect(collections[1]).toBeDefined(); // pagesEN - new with locale
+      expect(collections[2]).toBeDefined(); // blog-posts - new with idGenerator
+      expect(collections[3]).toBeDefined(); // articlesDE - new with all
+
+      // Verify each was called correctly
+      expect(mockStrapiLoader).toHaveBeenCalledWith(
+        "homepage",
+        expect.objectContaining({ url: mockOptions.url }),
+        { populate: { seo: true } }
+      );
+
+      expect(mockStrapiLoader).toHaveBeenCalledWith(
+        "pages",
+        expect.objectContaining({ 
+          collectionName: "pagesEN",
+          locale: "en"
+        }),
+        { sort: ['publishedAt:desc'] }
+      );
+
+      expect(mockStrapiLoader).toHaveBeenCalledWith(
+        "blog-posts",
+        expect.objectContaining({ idGenerator }),
+        { filters: { published: true } }
+      );
+
+      expect(mockStrapiLoader).toHaveBeenCalledWith(
+        "articles",
+        expect.objectContaining({ 
+          collectionName: "articlesDE",
+          locale: ["de", "fr"],
+          idGenerator
+        }),
+        {}
+      );
+    });
+  });
+
   describe("Integration Example Scenarios", () => {
-    it("scenariusz: wielojęzyczny blog z niestandardowymi slugami", () => {
+    it("scenario: multilingual blog with custom slugs", () => {
       const testSchema = z.object({
         documentId: z.string(),
         slug: z.string(),
@@ -359,7 +515,7 @@ describe("Strapi Extended Features", () => {
       );
     });
 
-    it("scenariusz: jedna kolekcja dla wielu języków", () => {
+    it("scenario: single collection for multiple languages", () => {
       const testSchema = z.object({
         documentId: z.string(),
         slug: z.string(),
@@ -391,7 +547,7 @@ describe("Strapi Extended Features", () => {
       );
     });
 
-    it("scenariusz: kategorie z niestandardowym ID na podstawie ścieżki", () => {
+    it("scenario: categories with custom ID based on path", () => {
       const testSchema = z.object({
         documentId: z.string(),
         category: z.string(),
