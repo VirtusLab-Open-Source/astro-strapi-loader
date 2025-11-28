@@ -55,6 +55,9 @@ yarn add @sensinum/astro-strapi-loader
 * Authorization token support
 * Astro collections system integration
 * TypeScript typing
+* **🆕 Custom ID generation** - Generate collection IDs from custom fields (e.g., slugs)
+* **🆕 Multiple collections** - Create multiple collections from same endpoint
+* **🆕 i18n support** - Built-in locale support for multilingual content
 
 ## 🖥️ Usage
 
@@ -131,8 +134,111 @@ const myCollection = await fetchContent({
 |--------|------|----------|-------------|
 | `url` | `string` | Yes | Strapi API URL |
 | `token` | `string` | No | Strapi API access token |
+| `collectionName` | `string` | No | Custom collection name (for multiple collections from same endpoint) |
+| `idGenerator` | `function` | No | Custom function to generate IDs from item data |
+| `locale` | `string \| string[]` | No | Single locale or array of locales for i18n support |
 
 > **⚠️ Note:** The token must have **read access** to both the **Content API** and the **Content-Type Builder API** *(ONLY to the "Get Content Types" endpoint)*.
+
+### Advanced Usage Examples
+
+#### Custom ID Generation
+
+Use slugs or custom fields as collection IDs instead of Strapi's `documentId`:
+
+```typescript
+import { strapiLoader } from '@sensinum/astro-strapi-loader';
+import { defineCollection, z } from 'astro:content';
+
+const pages = defineCollection({
+  loader: strapiLoader('pages', {
+    url: import.meta.env.STRAPI_URL,
+    token: import.meta.env.STRAPI_TOKEN,
+    idGenerator: (data) => data.slug as string
+  }),
+  schema: z.object({
+    slug: z.string(),
+    title: z.string(),
+    content: z.string()
+  })
+});
+
+// Now you can use: getEntry('pages', 'about-us')
+```
+
+#### Multiple Collections from Same Endpoint
+
+Create separate collections for different languages from the same Strapi content type:
+
+```typescript
+const pagesEN = defineCollection({
+  loader: strapiLoader('pages', {
+    url: import.meta.env.STRAPI_URL,
+    token: import.meta.env.STRAPI_TOKEN,
+    collectionName: 'pagesEN',
+    locale: 'en'
+  }),
+  schema: pageSchema
+});
+
+const pagesDE = defineCollection({
+  loader: strapiLoader('pages', {
+    url: import.meta.env.STRAPI_URL,
+    token: import.meta.env.STRAPI_TOKEN,
+    collectionName: 'pagesDE',
+    locale: 'de'
+  }),
+  schema: pageSchema
+});
+
+export const collections = { pagesEN, pagesDE };
+```
+
+#### Multiple Locales in Single Collection
+
+Fetch all language versions in one collection:
+
+```typescript
+const pagesMultilang = defineCollection({
+  loader: strapiLoader('pages', {
+    url: import.meta.env.STRAPI_URL,
+    token: import.meta.env.STRAPI_TOKEN,
+    locale: ['en', 'de', 'fr'] // Array of locales
+  }),
+  schema: z.object({
+    title: z.string(),
+    content: z.string(),
+    _locale: z.string() // Automatically added by loader
+  })
+});
+
+// Access by locale-prefixed ID
+const page = await getEntry('pagesMultilang', 'en:documentId');
+
+// Or filter by locale
+const allPages = await getCollection('pagesMultilang');
+const enPages = allPages.filter(p => p.data._locale === 'en');
+```
+
+#### Combining All Features
+
+```typescript
+const blogMultilang = defineCollection({
+  loader: strapiLoader('blog-posts', {
+    url: import.meta.env.STRAPI_URL,
+    token: import.meta.env.STRAPI_TOKEN,
+    collectionName: 'blogAllLanguages',
+    locale: ['en', 'de', 'fr'],
+    idGenerator: (data) => data.slug as string
+  }, {
+    sort: ['publishedAt:desc'],
+    filters: { status: { $eq: 'published' } }
+  }),
+  schema: blogSchema
+});
+
+// Access: getEntry('blogAllLanguages', 'en:my-post-slug')
+```
 
 ### Query Options
 
