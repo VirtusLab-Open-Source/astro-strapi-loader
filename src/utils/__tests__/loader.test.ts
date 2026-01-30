@@ -24,6 +24,7 @@ describe("strapiLoader", () => {
   const options = {
     url: "http://test-strapi.com",
     token: "test-token",
+    headers: { foo: "bar" },
   };
 
   beforeEach(() => {
@@ -47,6 +48,7 @@ describe("strapiLoader", () => {
       token: options.token,
       contentType: "test-content",
       queryParams: "",
+      headers: options.headers,
     });
 
     expect(mockContext.store.clear).toHaveBeenCalled();
