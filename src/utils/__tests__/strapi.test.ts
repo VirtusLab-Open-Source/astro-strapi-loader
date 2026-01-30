@@ -36,6 +36,7 @@ describe("Strapi Utils", () => {
       const result = await fetchContentTypes({
         url: "http://localhost:1337",
         token: "test-token",
+        headers: { "X-Extra-Header": "foo" },
       });
 
       expect(result).toEqual(mockResponse.data);
@@ -45,6 +46,7 @@ describe("Strapi Utils", () => {
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer test-token",
+            "X-Extra-Header": "foo",
           },
           method: "GET",
         },
