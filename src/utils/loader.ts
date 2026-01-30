@@ -5,6 +5,7 @@ import { fetchContent } from "./strapi";
 export interface StrapiLoaderOptions {
   url: string;
   token?: string;
+  headers?: Record<string, string>;
   /**
    * Custom name for the collection. Allows multiple collections from the same endpoint.
    */
@@ -36,7 +37,7 @@ export function strapiLoader(
 
       logger.info(`[${collectionName}] Loading data from Strapi...`);
       const { url, token, idGenerator, locale } = options;
-      
+
       store.clear();
 
       // Determine which locales to fetch
@@ -55,7 +56,7 @@ export function strapiLoader(
       } else {
         // Fetch data for each locale separately
         const localeDataMap: Record<string, any> = {};
-        
+
         for (const loc of localesToFetch) {
           const localeQuery = { ...query, locale: loc };
           const response = await fetchContent({
