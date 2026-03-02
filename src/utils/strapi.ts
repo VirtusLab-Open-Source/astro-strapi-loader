@@ -10,6 +10,7 @@ export interface StrapiRequestOptions {
   token?: string;
   path: string;
   queryParams?: string;
+  headers?: Record<string, string>;
 }
 
 export interface StrapiCollectionsGeneratorOptions
@@ -39,9 +40,10 @@ export interface StrapiCollection {
 }
 
 async function strapiRequest<T>(options: StrapiRequestOptions): Promise<T> {
-  const { url, token, path } = options;
+  const { url, token, path, headers: extraHeaders = {} } = options;
   const headers: HeadersInit = {
     "Content-Type": "application/json",
+    ...extraHeaders,
   };
 
   if (token) {
@@ -87,12 +89,13 @@ export async function fetchComponents(
 export async function fetchContent(
   options: Omit<StrapiRequestOptions, "path"> & { contentType: string },
 ): Promise<any> {
-  const { url, token, contentType, queryParams } = options;
+  const { url, token, contentType, queryParams, headers } = options;
   const path = `${contentType}${queryParams ? `/?${queryParams}` : ""}`;
   return strapiRequest({
     url,
     token,
     path,
+    headers,
   });
 }
 
@@ -149,12 +152,12 @@ export async function generateCollections(
       const reqCollection = reqCollections.find((rc) =>
         typeof rc === "string" ? rc === collection : rc.name === collection,
       ) as StrapiCollection | undefined;
-      
+
       const collectionConfig: Partial<StrapiCollection> =
         typeof reqCollection === "string" ? {} : reqCollection || {};
-      
+
       const collectionKey = collectionConfig.collectionName || collection;
-      
+
       return {
         ...acc,
         [collectionKey]: generateCollection(

@@ -5,6 +5,7 @@ import { fetchContent } from "./strapi";
 export interface StrapiLoaderOptions {
   url: string;
   token?: string;
+  headers?: Record<string, string>;
   /**
    * Custom name for the collection. Allows multiple collections from the same endpoint.
    */
@@ -35,8 +36,8 @@ export function strapiLoader(
       const collectionName = options.collectionName || contentType;
 
       logger.info(`[${collectionName}] Loading data from Strapi...`);
-      const { url, token, idGenerator, locale } = options;
-      
+      const { url, token, idGenerator, locale, headers } = options;
+
       store.clear();
 
       // Determine which locales to fetch
@@ -49,13 +50,13 @@ export function strapiLoader(
       // If no locales specified, fetch with the original query
       if (!localesToFetch) {
         await fetchAndStoreData(
-          { url, token, contentType, query },
+          { url, token, contentType, query, headers },
           { store, logger, parseData, generateDigest, idGenerator, collectionName }
         );
       } else {
         // Fetch data for each locale separately
         const localeDataMap: Record<string, any> = {};
-        
+
         for (const loc of localesToFetch) {
           const localeQuery = { ...query, locale: loc };
           const response = await fetchContent({
@@ -63,6 +64,7 @@ export function strapiLoader(
             token,
             contentType,
             queryParams: qs.stringify(localeQuery),
+            headers,
           });
 
           if (response.data && response.data.length > 0) {
@@ -95,6 +97,7 @@ async function fetchAndStoreData(
     token?: string;
     contentType: string;
     query: Record<string, unknown>;
+    headers?: Record<string, string>;
   },
   storeOptions: {
     store: LoaderContext['store'];
@@ -105,7 +108,7 @@ async function fetchAndStoreData(
     collectionName: string;
   }
 ): Promise<void> {
-  const { url, token, contentType, query } = fetchOptions;
+  const { url, token, contentType, query, headers } = fetchOptions;
   const { store, logger, parseData, generateDigest, idGenerator, collectionName } = storeOptions;
 
   const response = await fetchContent({
@@ -113,6 +116,7 @@ async function fetchAndStoreData(
     token,
     contentType,
     queryParams: query ? qs.stringify(query) : undefined,
+    headers,
   });
 
   if (response.data.length === 0) {

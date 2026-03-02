@@ -72,6 +72,9 @@ try {
   strapiCollections = await generateCollections({
     url: import.meta.env.STRAPI_URL,
     token: import.meta.env.STRAPI_TOKEN,
+    headers: {
+      // ...
+    },
   }, [{ // leave empty [] to fetch all the collections based on default Strapi settings
     name: "homepage",
     query: {
@@ -110,7 +113,7 @@ const myCollection = await fetchContent({
   token: import.meta.env.STRAPI_TOKEN,
   contentType: 'my-collection',
   queryParams: {
-    populate: { 
+    populate: {
       // ...
     },
     filters: {
@@ -142,6 +145,7 @@ const myCollection = await fetchContent({
 | `collectionName` | `string` | No | Custom collection name (for multiple collections from same endpoint) |
 | `idGenerator` | `function` | No | Custom function to generate IDs from item data |
 | `locale` | `string \| string[]` | No | Single locale or array of locales for i18n support |
+| `headers` | `Record<string, string>` | No | Additional headers for API request |
 
 > **⚠️ Note:** The token must have **read access** to both the **Content API** and the **Content-Type Builder API** *(ONLY to the "Get Content Types" endpoint)*.
 
@@ -163,7 +167,7 @@ strapiCollections = await generateCollections({
     name: "layout",
     query: { populate: { header: true, footer: true } }
   },
-  
+
   // ✅ 1.1.0+ - with locale support
   {
     name: "pages",
@@ -177,14 +181,14 @@ strapiCollections = await generateCollections({
     locale: "de",
     query: { sort: ['publishedAt:desc'] }
   },
-  
+
   // ✅ 1.1.0+ - with custom ID
   {
     name: "blog-posts",
     idGenerator: (data) => data.slug as string,
     query: { filters: { published: true } }
   },
-  
+
   // ✅ 1.1.0+ - combining all features
   {
     name: "articles",
@@ -385,4 +389,4 @@ Please make sure to:
 
 Copyright © [Sensinum](https://sensinum.com) &amp; [VirtusLab](https://virtuslab.com)
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details. 
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
