@@ -55,6 +55,9 @@ yarn add @sensinum/astro-strapi-loader
 * Authorization token support
 * Astro collections system integration
 * TypeScript typing
+* **🆕 Custom ID generation** - Generate collection IDs from custom fields (e.g., slugs)
+* **🆕 Multiple collections** - Create multiple collections from same endpoint
+* **🆕 i18n support** - Built-in locale support for multilingual content
 
 ## 🖥️ Usage
 
@@ -70,13 +73,16 @@ try {
     url: import.meta.env.STRAPI_URL,
     token: import.meta.env.STRAPI_TOKEN,
   }, [{ // leave empty [] to fetch all the collections based on default Strapi settings
-    name: "my-collection",
+    name: "homepage",
     query: {
-      populate: {
-        // ...
-      },
+      populate: { seo: true },
     },
-  }, 'yet-another-collection']);
+  }, {
+    name: "layout",
+    query: {
+      populate: { header: true, footer: true },
+    },
+  }, 'simple-collection-name']); // Can also pass just strings
 } catch (error) {
   console.error(error);
 }
@@ -85,6 +91,8 @@ export const collections = {
     ...strapiCollections,
 };
 ```
+
+> **✅ Backward Compatible:** Existing code works without any changes!
 
 2. Use in your Astro component:
 
@@ -131,8 +139,205 @@ const myCollection = await fetchContent({
 |--------|------|----------|-------------|
 | `url` | `string` | Yes | Strapi API URL |
 | `token` | `string` | No | Strapi API access token |
+| `collectionName` | `string` | No | Custom collection name (for multiple collections from same endpoint) |
+| `idGenerator` | `function` | No | Custom function to generate IDs from item data |
+| `locale` | `string \| string[]` | No | Single locale or array of locales for i18n support |
 
 > **⚠️ Note:** The token must have **read access** to both the **Content API** and the **Content-Type Builder API** *(ONLY to the "Get Content Types" endpoint)*.
+
+### Mixing 1.0.x and 1.1.0+
+
+You can mix old (simple) and new (extended) format in a single `generateCollections` call:
+
+```typescript
+strapiCollections = await generateCollections({
+  url: import.meta.env.STRAPI_URL,
+  token: import.meta.env.STRAPI_TOKEN,
+}, [
+  // ✅ Old format - works as before
+  {
+    name: "homepage",
+    query: { populate: { seo: true } }
+  },
+  {
+    name: "layout",
+    query: { populate: { header: true, footer: true } }
+  },
+  
+  // ✅ 1.1.0+ - with locale support
+  {
+    name: "pages",
+    collectionName: "pagesEN",
+    locale: "en",
+    query: { sort: ['publishedAt:desc'] }
+  },
+  {
+    name: "pages",  // Same endpoint, different config!
+    collectionName: "pagesDE",
+    locale: "de",
+    query: { sort: ['publishedAt:desc'] }
+  },
+  
+  // ✅ 1.1.0+ - with custom ID
+  {
+    name: "blog-posts",
+    idGenerator: (data) => data.slug as string,
+    query: { filters: { published: true } }
+  },
+  
+  // ✅ 1.1.0+ - combining all features
+  {
+    name: "articles",
+    collectionName: "articlesMultilang",
+    locale: ["en", "de", "fr"],
+    idGenerator: (data) => data.slug as string
+  }
+]);
+
+// Result collections:
+// - homepage (old format)
+// - layout (old format)
+// - pagesEN (1.1.0+)
+// - pagesDE (1.1.0+)
+// - blog-posts (1.1.0+)
+// - articlesMultilang (1.1.0+)
+```
+
+### Advanced Usage Examples
+
+#### Custom ID Generation
+
+Use slugs or custom fields as collection IDs instead of Strapi's `documentId`:
+
+**Option A:** Using `generateCollections`:
+
+```typescript
+strapiCollections = await generateCollections({
+  url: import.meta.env.STRAPI_URL,
+  token: import.meta.env.STRAPI_TOKEN,
+}, [{
+  name: "pages",
+  idGenerator: (data) => data.slug as string,
+  query: { populate: { seo: true } }
+}]);
+
+// Now you can use: getEntry('pages', 'about-us')
+```
+
+**Option B:** Using `strapiLoader` directly:
+
+```typescript
+import { strapiLoader } from '@sensinum/astro-strapi-loader';
+import { defineCollection, z } from 'astro:content';
+
+const pages = defineCollection({
+  loader: strapiLoader('pages', {
+    url: import.meta.env.STRAPI_URL,
+    token: import.meta.env.STRAPI_TOKEN,
+    idGenerator: (data) => data.slug as string
+  }),
+  schema: z.object({
+    slug: z.string(),
+    title: z.string(),
+    content: z.string()
+  })
+});
+```
+
+#### Multiple Collections from Same Endpoint
+
+**Option A:** Using `generateCollections` (recommended for multiple collections):
+
+```typescript
+strapiCollections = await generateCollections({
+  url: import.meta.env.STRAPI_URL,
+  token: import.meta.env.STRAPI_TOKEN,
+}, [{
+  name: "pages",
+  collectionName: "pagesEN",
+  locale: "en",
+  query: { sort: ['publishedAt:desc'] }
+}, {
+  name: "pages",  // Same endpoint!
+  collectionName: "pagesDE",
+  locale: "de",
+  query: { sort: ['publishedAt:desc'] }
+}]);
+
+// Now you have both 'pagesEN' and 'pagesDE' collections
+```
+
+**Option B:** Using `strapiLoader` directly:
+
+```typescript
+const pagesEN = defineCollection({
+  loader: strapiLoader('pages', {
+    url: import.meta.env.STRAPI_URL,
+    token: import.meta.env.STRAPI_TOKEN,
+    collectionName: 'pagesEN',
+    locale: 'en'
+  }),
+  schema: pageSchema
+});
+
+const pagesDE = defineCollection({
+  loader: strapiLoader('pages', {
+    url: import.meta.env.STRAPI_URL,
+    token: import.meta.env.STRAPI_TOKEN,
+    collectionName: 'pagesDE',
+    locale: 'de'
+  }),
+  schema: pageSchema
+});
+
+export const collections = { pagesEN, pagesDE };
+```
+
+#### Multiple Locales in Single Collection
+
+Fetch all language versions in one collection:
+
+```typescript
+const pagesMultilang = defineCollection({
+  loader: strapiLoader('pages', {
+    url: import.meta.env.STRAPI_URL,
+    token: import.meta.env.STRAPI_TOKEN,
+    locale: ['en', 'de', 'fr'] // Array of locales
+  }),
+  schema: z.object({
+    title: z.string(),
+    content: z.string(),
+    _locale: z.string() // Automatically added by loader
+  })
+});
+
+// Access by locale-prefixed ID
+const page = await getEntry('pagesMultilang', 'en:documentId');
+
+// Or filter by locale
+const allPages = await getCollection('pagesMultilang');
+const enPages = allPages.filter(p => p.data._locale === 'en');
+```
+
+#### Combining All Features
+
+```typescript
+const blogMultilang = defineCollection({
+  loader: strapiLoader('blog-posts', {
+    url: import.meta.env.STRAPI_URL,
+    token: import.meta.env.STRAPI_TOKEN,
+    collectionName: 'blogAllLanguages',
+    locale: ['en', 'de', 'fr'],
+    idGenerator: (data) => data.slug as string
+  }, {
+    sort: ['publishedAt:desc'],
+    filters: { status: { $eq: 'published' } }
+  }),
+  schema: blogSchema
+});
+
+// Access: getEntry('blogAllLanguages', 'en:my-post-slug')
+```
 
 ### Query Options
 

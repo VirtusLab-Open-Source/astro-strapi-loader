@@ -1,6 +1,6 @@
 {
   "name": "@sensinum/astro-strapi-loader",
-  "version": "1.0.11",
+  "version": "1.1.0",
   "description": "Astro loader for Strapi CMS",
   "keywords": [
     "astro",
@@ -83,6 +83,5 @@
   "engines": {
     "node": ">=18.17.0",
     "yarn": "1.22.19"
-  },
-  "packageManager": "yarn@1.22.19"
+  }
 }
