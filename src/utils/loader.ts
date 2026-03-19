@@ -28,8 +28,8 @@ export function strapiLoader(
   contentType: string,
   options: StrapiLoaderOptions,
   query: Record<string, unknown> = {},
-): Loader {
-  return {
+) {
+  return ({
     name: options.collectionName || "strapi-loader",
     load: async (context: LoaderContext): Promise<void> => {
       const { store, logger, parseData, generateDigest } = context;
@@ -88,7 +88,7 @@ export function strapiLoader(
 
       logger.info(`[${collectionName}] Loading data from Strapi... DONE`);
     },
-  };
+  }) satisfies Loader;
 }
 
 async function fetchAndStoreData(
