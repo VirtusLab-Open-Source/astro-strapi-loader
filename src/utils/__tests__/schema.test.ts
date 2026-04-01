@@ -997,6 +997,59 @@ describe("StrapiSchemaGenerator", () => {
       expect(schema.shape).toHaveProperty("relatedB");
     });
 
+    it("should handle cycle through component with relation back to content type", () => {
+      const pageType: StrapiContentType = {
+        apiID: "page",
+        uid: "api::page.page",
+        plugin: undefined,
+        schema: {
+          uid: "api::page.page",
+          kind: "collectionType",
+          collectionName: "pages",
+          singularName: "page",
+          pluralName: "pages",
+          displayName: "Page",
+          draftAndPublish: true,
+          pluginOptions: {},
+          visible: true,
+          attributes: {
+            title: { type: "string", required: true },
+            sections: {
+              type: "component",
+              repeatable: true,
+              component: "layout.section-with-page",
+            },
+          },
+        },
+      };
+
+      const componentWithRelation: StrapiComponent = {
+        uid: "layout.section-with-page",
+        category: "layout",
+        apiId: "section-with-page",
+        schema: {
+          displayName: "Section with Page",
+          description: "Section linking back to a page",
+          icon: "link",
+          collectionName: "components_layout_section_with_pages",
+          attributes: {
+            heading: { type: "string", required: true },
+            linkedPage: {
+              type: "relation",
+              relation: "oneToOne",
+              target: "api::page.page",
+            },
+          },
+        },
+      };
+
+      const testGenerator = new StrapiSchemaGenerator([pageType], [componentWithRelation]);
+      const schema = testGenerator.generateSchema("page");
+
+      expect(schema.shape).toHaveProperty("title");
+      expect(schema.shape).toHaveProperty("sections");
+    });
+
     it("should handle generateAllSchemas with self-referencing types", () => {
       const coverageType: StrapiContentType = {
         apiID: "coverage-type",

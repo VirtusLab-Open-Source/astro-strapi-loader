@@ -5,6 +5,7 @@ export class StrapiSchemaGenerator {
   private contentTypes: Array<StrapiContentType> = [];
   private components: Array<StrapiComponent> = [];
   private strict: boolean = false;
+  private processingUids = new Set<string>();
 
   constructor(contentTypes: Array<StrapiContentType>, components: Array<StrapiComponent>, strict: boolean = false) {
     this.contentTypes = contentTypes;
@@ -15,7 +16,6 @@ export class StrapiSchemaGenerator {
   private generateAttributeSchema(
     attribute: StrapiAttribute,
     pupulatedRelations: Array<string> = [],
-    ancestorUids: Set<string> = new Set(),
   ): z.ZodType<unknown> | null {
     const ref = this;
     let schema;
@@ -110,17 +110,9 @@ export class StrapiSchemaGenerator {
           return null;
         }
 
-        if (ancestorUids.has(targetType.uid)) {
-          schema = attribute.relation === "oneToMany" || attribute.relation === "manyToMany"
-            ? z.array(z.any())
-            : z.any();
-          break;
-        }
-
         const relationSchema = ref.generateContentTypeSchema(
           targetType.schema,
           attribute.targetAttribute ? [...pupulatedRelations, attribute.targetAttribute] : pupulatedRelations,
-          ancestorUids,
         );
 
         switch (attribute.relation) {
@@ -170,42 +162,53 @@ export class StrapiSchemaGenerator {
   private generateContentTypeSchema(
     contentTypeSchema: StrapiContentType["schema"],
     pupulatedRelations?: Array<string>,
-    ancestorUids: Set<string> = new Set(),
   ): z.ZodObject<any> {
-    const ref = this;
-    const currentAncestors = new Set(ancestorUids);
-    currentAncestors.add(contentTypeSchema.uid);
+    const uid = contentTypeSchema.uid;
 
-    const shape: Record<string, z.ZodTypeAny> = Object.entries(
-      contentTypeSchema.attributes,
-    ).reduce(
-      (acc, [key, attribute]) => {
-        try {
-          const schema = ref.generateAttributeSchema(attribute, pupulatedRelations, currentAncestors);
-          if (schema) {
-            return {
-              ...acc,
-              [key]:
-                ref.strict && attribute.required && !attribute.conditions
-                  ? schema
-                  : schema.nullable().optional(),
-            };
-          }
-          return acc;
-        } catch (error) {
-          console.warn("Error generating attribute schema", error);
-          return acc;
-        }
-      },
-      {
+    if (this.processingUids.has(uid)) {
+      return z.object({
         id: z.number().optional(),
         documentId: z.string().optional(),
-        createdAt: z.string().datetime().optional(),
-        updatedAt: z.string().datetime().optional(),
-      },
-    );
+      });
+    }
 
-    return z.object(shape);
+    this.processingUids.add(uid);
+
+    try {
+      const ref = this;
+      const shape: Record<string, z.ZodTypeAny> = Object.entries(
+        contentTypeSchema.attributes,
+      ).reduce(
+        (acc, [key, attribute]) => {
+          try {
+            const schema = ref.generateAttributeSchema(attribute, pupulatedRelations);
+            if (schema) {
+              return {
+                ...acc,
+                [key]:
+                  ref.strict && attribute.required && !attribute.conditions
+                    ? schema
+                    : schema.nullable().optional(),
+              };
+            }
+            return acc;
+          } catch (error) {
+            console.warn("Error generating attribute schema", error);
+            return acc;
+          }
+        },
+        {
+          id: z.number().optional(),
+          documentId: z.string().optional(),
+          createdAt: z.string().datetime().optional(),
+          updatedAt: z.string().datetime().optional(),
+        },
+      );
+
+      return z.object(shape);
+    } finally {
+      this.processingUids.delete(uid);
+    }
   }
 
   private generateComponentSchema(componentSchema: StrapiComponent["schema"]): z.ZodObject<any> {
