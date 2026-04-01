@@ -1,6 +1,6 @@
 {
   "name": "@sensinum/astro-strapi-loader",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Astro loader for Strapi CMS",
   "keywords": [
     "astro",
@@ -19,8 +19,8 @@
     "url": "https://github.com/VirtusLab-Open-Source/astro-strapi-loader"
   },
   "author": {
-    "name": "VirtusLab / Sensinum",
-    "email": "contact@sensinum.com",
+    "name": "Sensinum",
+    "email": "hello@sensinum.com",
     "url": "https://sensinum.com"
   },
   "maintainers": [
