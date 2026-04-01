@@ -47,11 +47,9 @@ export class StrapiSchemaGenerator {
       case "biginteger":
       case "float":
       case "decimal":
-        let numberSchema = z.number();
-        if (attribute.required) numberSchema = numberSchema.min(0);
-        if (attribute.min) numberSchema = numberSchema.min(attribute.min);
-        if (attribute.max) numberSchema = numberSchema.max(attribute.max);
-        schema = numberSchema;
+        schema = attribute.required
+          ? z.union([z.number(), z.string()])
+          : z.union([z.number(), z.string()]).nullable().optional();
         break;
       case "boolean":
         schema = z.boolean();
