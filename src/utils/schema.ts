@@ -12,7 +12,11 @@ export class StrapiSchemaGenerator {
     this.strict = strict;
   }
 
-  private generateAttributeSchema(attribute: StrapiAttribute, pupulatedRelations: Array<string> = []): z.ZodType<unknown> | null {
+  private generateAttributeSchema(
+    attribute: StrapiAttribute,
+    pupulatedRelations: Array<string> = [],
+    ancestorUids: Set<string> = new Set(),
+  ): z.ZodType<unknown> | null {
     const ref = this;
     let schema;
     switch (attribute.type) {
@@ -106,9 +110,17 @@ export class StrapiSchemaGenerator {
           return null;
         }
 
+        if (ancestorUids.has(targetType.uid)) {
+          schema = attribute.relation === "oneToMany" || attribute.relation === "manyToMany"
+            ? z.array(z.any())
+            : z.any();
+          break;
+        }
+
         const relationSchema = ref.generateContentTypeSchema(
           targetType.schema,
           attribute.targetAttribute ? [...pupulatedRelations, attribute.targetAttribute] : pupulatedRelations,
+          ancestorUids,
         );
 
         switch (attribute.relation) {
@@ -157,15 +169,19 @@ export class StrapiSchemaGenerator {
 
   private generateContentTypeSchema(
     contentTypeSchema: StrapiContentType["schema"],
-    pupulatedRelations?: Array<string>
+    pupulatedRelations?: Array<string>,
+    ancestorUids: Set<string> = new Set(),
   ): z.ZodObject<any> {
     const ref = this;
+    const currentAncestors = new Set(ancestorUids);
+    currentAncestors.add(contentTypeSchema.uid);
+
     const shape: Record<string, z.ZodTypeAny> = Object.entries(
       contentTypeSchema.attributes,
     ).reduce(
       (acc, [key, attribute]) => {
         try {
-          const schema = ref.generateAttributeSchema(attribute, pupulatedRelations);
+          const schema = ref.generateAttributeSchema(attribute, pupulatedRelations, currentAncestors);
           if (schema) {
             return {
               ...acc,

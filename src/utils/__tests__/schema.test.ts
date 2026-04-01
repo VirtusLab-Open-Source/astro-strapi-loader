@@ -899,6 +899,158 @@ describe("StrapiSchemaGenerator", () => {
       expect(schema.shape).toHaveProperty("parent");
       expect(schema.shape).toHaveProperty("children");
     });
+
+    it("should handle self-referencing relation without targetAttribute", () => {
+      const coverageType: StrapiContentType = {
+        apiID: "coverage-type",
+        uid: "api::coverage-type.coverage-type",
+        plugin: undefined,
+        schema: {
+          uid: "api::coverage-type.coverage-type",
+          kind: "collectionType",
+          collectionName: "coverage_types",
+          singularName: "coverage-type",
+          pluralName: "coverage-types",
+          displayName: "Coverage Type",
+          draftAndPublish: true,
+          pluginOptions: {},
+          visible: true,
+          attributes: {
+            name: { type: "string", required: true },
+            parentCoverage: {
+              type: "relation",
+              relation: "manyToOne",
+              target: "api::coverage-type.coverage-type",
+            },
+            childCoverages: {
+              type: "relation",
+              relation: "oneToMany",
+              target: "api::coverage-type.coverage-type",
+            },
+          },
+        },
+      };
+
+      const testGenerator = new StrapiSchemaGenerator([coverageType], []);
+      const schema = testGenerator.generateSchema("coverage-type");
+
+      expect(schema.shape).toHaveProperty("name");
+      expect(schema.shape).toHaveProperty("parentCoverage");
+      expect(schema.shape).toHaveProperty("childCoverages");
+    });
+
+    it("should handle indirect circular relations (A -> B -> A)", () => {
+      const typeA: StrapiContentType = {
+        apiID: "type-a",
+        uid: "api::type-a.type-a",
+        plugin: undefined,
+        schema: {
+          uid: "api::type-a.type-a",
+          kind: "collectionType",
+          collectionName: "type_as",
+          singularName: "type-a",
+          pluralName: "type-as",
+          displayName: "Type A",
+          draftAndPublish: true,
+          pluginOptions: {},
+          visible: true,
+          attributes: {
+            name: { type: "string", required: true },
+            relatedB: {
+              type: "relation",
+              relation: "oneToOne",
+              target: "api::type-b.type-b",
+            },
+          },
+        },
+      };
+
+      const typeB: StrapiContentType = {
+        apiID: "type-b",
+        uid: "api::type-b.type-b",
+        plugin: undefined,
+        schema: {
+          uid: "api::type-b.type-b",
+          kind: "collectionType",
+          collectionName: "type_bs",
+          singularName: "type-b",
+          pluralName: "type-bs",
+          displayName: "Type B",
+          draftAndPublish: true,
+          pluginOptions: {},
+          visible: true,
+          attributes: {
+            title: { type: "string", required: true },
+            relatedA: {
+              type: "relation",
+              relation: "oneToMany",
+              target: "api::type-a.type-a",
+            },
+          },
+        },
+      };
+
+      const testGenerator = new StrapiSchemaGenerator([typeA, typeB], []);
+      const schema = testGenerator.generateSchema("type-a");
+
+      expect(schema.shape).toHaveProperty("name");
+      expect(schema.shape).toHaveProperty("relatedB");
+    });
+
+    it("should handle generateAllSchemas with self-referencing types", () => {
+      const coverageType: StrapiContentType = {
+        apiID: "coverage-type",
+        uid: "api::coverage-type.coverage-type",
+        plugin: undefined,
+        schema: {
+          uid: "api::coverage-type.coverage-type",
+          kind: "collectionType",
+          collectionName: "coverage_types",
+          singularName: "coverage-type",
+          pluralName: "coverage-types",
+          displayName: "Coverage Type",
+          draftAndPublish: true,
+          pluginOptions: {},
+          visible: true,
+          attributes: {
+            name: { type: "string", required: true },
+            parent: {
+              type: "relation",
+              relation: "manyToOne",
+              target: "api::coverage-type.coverage-type",
+            },
+          },
+        },
+      };
+
+      const otherType: StrapiContentType = {
+        apiID: "car",
+        uid: "api::car.car",
+        plugin: undefined,
+        schema: {
+          uid: "api::car.car",
+          kind: "collectionType",
+          collectionName: "cars",
+          singularName: "car",
+          pluralName: "cars",
+          displayName: "Car",
+          draftAndPublish: true,
+          pluginOptions: {},
+          visible: true,
+          attributes: {
+            model: { type: "string", required: true },
+          },
+        },
+      };
+
+      const testGenerator = new StrapiSchemaGenerator([coverageType, otherType], []);
+      const schemas = testGenerator.generateAllSchemas();
+
+      expect(schemas).toHaveProperty("coverage-types");
+      expect(schemas).toHaveProperty("cars");
+      expect(schemas["coverage-types"].shape).toHaveProperty("name");
+      expect(schemas["coverage-types"].shape).toHaveProperty("parent");
+    });
   });
 
   describe("generateAllSchemas for singleType", () => {
