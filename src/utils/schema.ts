@@ -73,23 +73,25 @@ export class StrapiSchemaGenerator {
         schema = z.enum(attribute.enum as [string, ...string[]]).nullable();
         break;
       case "media":
-        const mediaSchema = z.object({
-          name: z.string(),
-          alternativeText: z.string().optional().nullable(),
-          caption: z.string().optional().nullable(),
-          width: z.number().optional().nullable(),
-          height: z.number().optional().nullable(),
-          formats: z.any().nullable(),
-          hash: z.string(),
-          ext: z.string().optional(),
-          mime: z.string(),
-          size: z.number(),
-          url: z.string(),
-          previewUrl: z.string().optional().nullable(),
-          provider: z.string(),
-          createdAt: z.string(),
-          updatedAt: z.string(),
-        });
+        const mediaSchema = z
+          .object({
+            name: z.string(),
+            alternativeText: z.string().optional().nullable(),
+            caption: z.string().optional().nullable(),
+            width: z.number().optional().nullable(),
+            height: z.number().optional().nullable(),
+            formats: z.any().nullable(),
+            hash: z.string(),
+            ext: z.string().optional(),
+            mime: z.string(),
+            size: z.number(),
+            url: z.string(),
+            previewUrl: z.string().optional().nullable(),
+            provider: z.string(),
+            createdAt: z.string(),
+            updatedAt: z.string(),
+          })
+          .passthrough();
         schema = attribute.multiple ? z.array(mediaSchema) : mediaSchema;
         break;
       case "relation":
@@ -164,10 +166,12 @@ export class StrapiSchemaGenerator {
     const uid = contentTypeSchema.uid;
 
     if (this.processingUids.has(uid)) {
-      return z.object({
-        id: z.number().optional(),
-        documentId: z.string().optional(),
-      });
+      return z
+        .object({
+          id: z.number().optional(),
+          documentId: z.string().optional(),
+        })
+        .passthrough();
     }
 
     this.processingUids.add(uid);
@@ -203,7 +207,7 @@ export class StrapiSchemaGenerator {
         },
       );
 
-      return z.object(shape);
+      return z.object(shape).passthrough();
     } finally {
       this.processingUids.delete(uid);
     }
@@ -216,7 +220,7 @@ export class StrapiSchemaGenerator {
       return { ...acc, [key]: ref.strict && attribute.required && !attribute.conditions ? schema : schema?.nullable().optional() };
     }, {});
 
-    return z.object(shape);
+    return z.object(shape).passthrough();
   }
 
   public generateSchema(contentTypeName: string): z.ZodObject<any> {
