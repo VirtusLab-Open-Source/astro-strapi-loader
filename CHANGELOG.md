@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-04-07
+
+### Fixed
+
+- Zod `z.object()` strips keys not present in the generated Content-Type Builder shape. Strapi REST responses with deep `populate` often include more fields than the static schema describes; `schema.parse()` was shrinking documents (often most of the payload). Added `.passthrough()` on content-type objects, component objects, media objects, and on the minimal cyclic-relation placeholder object so unknown keys from the API are preserved.
+
+### Added
+
+- Unit tests asserting passthrough behavior for extra top-level keys, nested component keys, media extras, and JSON payload size parity after parse.
+
 ## [1.1.0-beta.1] - 2025-11-28
 
 ### Added

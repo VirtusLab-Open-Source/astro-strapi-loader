@@ -1203,4 +1203,124 @@ describe("StrapiSchemaGenerator", () => {
       expect(schema.shape).toHaveProperty("requiredComponent");
     });
   });
+
+  describe("passthrough (Strapi populate / keys beyond CTB schema)", () => {
+    it("preserves top-level keys not defined in content type schema", () => {
+      const schema = generator.generateSchema("article");
+      const raw = {
+        id: 1,
+        documentId: "doc-1",
+        createdAt: "2025-01-01T00:00:00.000Z",
+        updatedAt: "2025-01-01T00:00:00.000Z",
+        title: "Hello",
+        content: "Body",
+        slug: "hello",
+        hero: null,
+        testimonials: null,
+        deepPopulateOnly: { nested: { unknownField: "kept" } },
+        extraScalar: "from-api",
+      };
+      const parsed = schema.parse(raw) as Record<string, unknown>;
+      expect(parsed.deepPopulateOnly).toEqual({ nested: { unknownField: "kept" } });
+      expect(parsed.extraScalar).toBe("from-api");
+    });
+
+    it("preserves keys on nested components not in component schema", () => {
+      const schema = generator.generateSchema("article");
+      const raw = {
+        id: 1,
+        documentId: "doc-1",
+        createdAt: "2025-01-01T00:00:00.000Z",
+        updatedAt: "2025-01-01T00:00:00.000Z",
+        title: "T",
+        content: "",
+        slug: "t",
+        hero: {
+          title: "Hero",
+          description: "D",
+          notInCtb: "preserved",
+          meta: { custom: true },
+        },
+        testimonials: null,
+      };
+      const parsed = schema.parse(raw) as { hero: Record<string, unknown> };
+      expect(parsed.hero.notInCtb).toBe("preserved");
+      expect(parsed.hero.meta).toEqual({ custom: true });
+    });
+
+    it("preserves extra keys on media objects from Strapi", () => {
+      const contentType: StrapiContentType = {
+        apiID: "with-media",
+        uid: "api::with-media.with-media",
+        plugin: undefined,
+        schema: {
+          uid: "api::with-media.with-media",
+          kind: "collectionType",
+          collectionName: "with_medias",
+          singularName: "with-media",
+          pluralName: "with-medias",
+          displayName: "With Media",
+          draftAndPublish: true,
+          pluginOptions: {},
+          visible: true,
+          attributes: {
+            cover: { type: "media" },
+          },
+        },
+      };
+      const testGenerator = new StrapiSchemaGenerator([contentType], []);
+      const schema = testGenerator.generateSchema("with-media");
+      const raw = {
+        id: 1,
+        documentId: "x",
+        cover: {
+          name: "a.jpg",
+          alternativeText: null,
+          caption: null,
+          width: 100,
+          height: 100,
+          formats: null,
+          hash: "h",
+          ext: ".jpg",
+          mime: "image/jpeg",
+          size: 1,
+          url: "/uploads/a.jpg",
+          previewUrl: null,
+          provider: "local",
+          createdAt: "2025-01-01T00:00:00.000Z",
+          updatedAt: "2025-01-01T00:00:00.000Z",
+          folder: { id: 9, name: "extra" },
+          related: [{ id: 2 }],
+        },
+      };
+      const parsed = schema.parse(raw) as { cover: Record<string, unknown> };
+      expect(parsed.cover.folder).toEqual({ id: 9, name: "extra" });
+      expect(parsed.cover.related).toEqual([{ id: 2 }]);
+    });
+
+    it("does not shrink JSON size vs input for a rich populated-like payload", () => {
+      const schema = generator.generateSchema("article");
+      const raw = {
+        id: 1,
+        documentId: "doc-1",
+        createdAt: "2025-01-01T00:00:00.000Z",
+        updatedAt: "2025-01-01T00:00:00.000Z",
+        title: "Homepage",
+        content: "x",
+        slug: "home",
+        hero: {
+          title: "H",
+          description: null,
+          blocks: [{ __component: "x.y", id: 1, extra: "data" }],
+        },
+        testimonials: null,
+        seo: { openGraph: { image: "/og.png" } },
+        localizations: [{ locale: "pl", documentId: "other" }],
+      };
+      const before = JSON.stringify(raw);
+      const parsed = schema.parse(raw);
+      const after = JSON.stringify(parsed);
+      expect(after.length).toBe(before.length);
+    });
+  });
 });
