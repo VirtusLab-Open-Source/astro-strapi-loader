@@ -22,15 +22,15 @@
 
 ## 📋 Table of Contents
 
-* [Requirements](#-requirements)
-* [Installation](#-installation)
-* [Features](#-features)
-* [AI-native support](#-ai-native-support)
-* [Usage](#-usage)
-* [Configuration](#-configuration)
-* [Development](#-development)
-* [Contributing](#-contributing)
-* [License](#-license)
+* [📋 Requirements](#-requirements)
+* [📦 Installation](#-installation)
+* [🚀 Features](#-features)
+* [🤖 AI-native support](#-ai-native-support)
+* [🖥️ Usage](#-usage)
+* [⚙️ Configuration](#-configuration)
+* [🔧 Development](#-development)
+* [🤝 Contributing](#-contributing)
+* [📄 License](#-license)
 
 ## 📋 Requirements
 
