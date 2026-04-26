@@ -1,0 +1,18 @@
+---
+description: Strapi 5 + @sensinum/astro-strapi-loader — content.config.ts, populate, qs, locales
+globs: "**/content.config.ts"
+alwaysApply: false
+---
+
+# Astro Strapi Loader (this repo)
+
+- Docs: [`.ai/AGENTS.md`](.ai/AGENTS.md), [`.ai/astro-strapi-loader/SKILL.md`](.ai/astro-strapi-loader/SKILL.md).
+- **Query objects:** Match [REST API parameters](https://docs.strapi.io/cms/api/rest/parameters)—nested **objects** for `populate` / `filters` / `pagination`, plus **array** or **string** where the table allows (`sort`, `fields`, `populate` as dot paths). **Never** hand-author the final `?` string; **`qs.stringify`** (or the loader) serializes. **Anti-pattern:** inline query text.
+- **Loader:** pass a **plain** `query` object only. **Custom HTTP:** `qs.stringify(q, { encodeValuesOnly: true })`. Not `URLSearchParams` for deep `populate`.
+- **Large configs:** **named fragments** (hero, seo, DZ) composed with `...spread`; optional **separate file** of exported query objects shared with any runtime `fetch` (same object → same `qs` output).
+- **Dynamic zone:** `populate: { <dzField>: { on: { '<uid>': { populate: ... } } } }`—each component uid its own `populate` subtree.
+- **Locales:** `locale` on each def; use **`collectionName`** to split one Strapi type into many Astro collections (e.g. per language suffix), or one collection with `locale: string[]` and `locale:id` / `_locale` in data.
+- **Merging `generateCollections`:** spread results from one or many `await` calls; loop + merge per def if you need per-endpoint error isolation.
+- **Runtime:** `getCollection` / `getEntry` from `astro:content`.
+
+Loader code: `src/utils/loader.ts`, `src/utils/strapi.ts`.

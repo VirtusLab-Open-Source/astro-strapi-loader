@@ -28,6 +28,7 @@
 * [Requirements](#-requirements)
 * [Installation](#-installation)
 * [Features](#-features)
+* [AI-native support](#-ai-native-support)
 * [Usage](#-usage)
 * [Configuration](#-configuration)
 * [Development](#-development)
@@ -58,6 +59,18 @@ yarn add @sensinum/astro-strapi-loader
 * **🆕 Custom ID generation** - Generate collection IDs from custom fields (e.g., slugs)
 * **🆕 Multiple collections** - Create multiple collections from same endpoint
 * **🆕 i18n support** - Built-in locale support for multilingual content
+
+## 🤖 AI-native support
+
+This repository includes **optional, model-agnostic guidance** for coding agents and AI-assisted workflows (Strapi REST `query` objects, `populate` / dynamic zones, `locale`, `qs` serialization, and Astro Collections usage).
+
+| Location | Purpose |
+|----------|---------|
+| [`.ai/AGENTS.md`](.ai/AGENTS.md) | Short **agent instructions**—non-negotiables and pointers to the skill. |
+| [`.ai/astro-strapi-loader/SKILL.md`](.ai/astro-strapi-loader/SKILL.md) | Full **skill** (YAML frontmatter + markdown); copy or adapt for your global or project skills directory. |
+| [`.cursor/rules/astro-strapi-loader.mdc`](.cursor/rules/astro-strapi-loader.mdc) | **Cursor rules** for files such as `content.config.ts` (`.mdc` with optional globs). |
+
+You can reuse or fork these files in **downstream projects** that consume `@sensinum/astro-strapi-loader` so assistants stay aligned with Strapi 5 REST parameters and this package’s behavior. The published npm package contains only `dist/`; AI assets live **in the GitHub tree** alongside the source.
 
 ## 🖥️ Usage
 
