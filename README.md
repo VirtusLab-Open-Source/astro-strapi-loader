@@ -34,8 +34,9 @@
 
 ## 📋 Requirements
 
-* Astro ^5.0.0
+* Astro ^6.0.0 || ^7.0.0
 * Strapi ^5.0.0
+* Node.js >= 22.12.0
 
 ## 📦 Installation
 
