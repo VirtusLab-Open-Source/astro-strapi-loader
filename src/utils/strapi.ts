@@ -5,6 +5,7 @@ import { z } from "astro/zod";
 import type { StrapiComponent, StrapiContentType, StrapiResponse } from "../types/strapi";
 import { StrapiSchemaGenerator } from "./schema";
 import { strapiLoader } from "./loader";
+import type { StrapiMarkdownOptions } from "./markdown";
 
 export interface StrapiRequestOptions {
   url: string;
@@ -38,6 +39,11 @@ export interface StrapiCollection {
    * - string[]: multiple locales (e.g., ['en', 'de']) - returns structure like { 'en': items, 'de': items }
    */
   locale?: string | string[];
+  /**
+   * Opt-in Markdown / HTML rendering for Astro `render()` / `<Content />`.
+   * See {@link StrapiMarkdownOptions}.
+   */
+  markdown?: StrapiMarkdownOptions;
 }
 
 async function strapiRequest<T>(options: StrapiRequestOptions): Promise<T> {
@@ -117,12 +123,14 @@ export function generateCollection(
   options: StrapiCollectionsGeneratorOptions,
   collectionConfig: Partial<StrapiCollection> = {},
 ): CollectionConfig<any> {
-  const { query = {}, collectionName, idGenerator, locale } = collectionConfig;
+  const { query = {}, collectionName, idGenerator, locale, markdown } =
+    collectionConfig;
   const loaderOptions = {
     ...options,
     collectionName,
     idGenerator,
     locale,
+    markdown,
   };
   return defineCollection({
     loader: strapiLoader(contentType, loaderOptions, query),

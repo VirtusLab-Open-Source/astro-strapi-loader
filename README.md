@@ -57,6 +57,7 @@ yarn add @sensinum/astro-strapi-loader
 * **🆕 Custom ID generation** - Generate collection IDs from custom fields (e.g., slugs)
 * **🆕 Multiple collections** - Create multiple collections from same endpoint
 * **🆕 i18n support** - Built-in locale support for multilingual content
+* **🆕 Native Markdown** - Opt-in `markdown` option uses Astro `renderMarkdown()` so `render()` / `<Content />` inherit your project markdown config (closes [#6](https://github.com/VirtusLab-Open-Source/astro-strapi-loader/issues/6))
 
 ## 🤖 AI-native support
 
@@ -156,6 +157,7 @@ const myCollection = await fetchContent({
 | `collectionName` | `string` | No | Custom collection name (for multiple collections from same endpoint) |
 | `idGenerator` | `function` | No | Custom function to generate IDs from item data |
 | `locale` | `string \| string[]` | No | Single locale or array of locales for i18n support |
+| `markdown` | `StrapiMarkdownOptions` | No | Opt-in body rendering for Astro `render()` (see [Native Markdown](#native-markdown)) |
 | `headers` | `Record<string, string>` | No | Additional headers for API request |
 
 > **⚠️ Note:** The token must have **read access** to both the **Content API** and the **Content-Type Builder API** *(ONLY to the "Get Content Types" endpoint)*.
@@ -353,6 +355,59 @@ const blogMultilang = defineCollection({
 
 // Access: getEntry('blogAllLanguages', 'en:my-post-slug')
 ```
+
+#### Native Markdown
+
+Opt-in support for Astro’s Content Layer `render()` / `<Content />`, using the same markdown pipeline as local `.md` files ([Loader `renderMarkdown`](https://docs.astro.build/en/reference/content-loader-reference/)). When `markdown` is omitted, the loader behavior is unchanged.
+
+**`StrapiMarkdownOptions`**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `field` | `string` | — | Dot-path to a markdown string on the entry (e.g. `content`, `seo.description`) |
+| `getMarkdown` | `(data) => string \| null \| undefined \| Promise<…>` | — | Custom extractor (wins over `field`) |
+| `includeBody` | `boolean` | `true` | Also store raw source on `entry.body` |
+| `format` | `"markdown" \| "html"` | `"markdown"` | `markdown` → `renderMarkdown()`; `html` → pass-through for already-rendered HTML |
+
+Helpers exported from the package: `getValueByPath`, `resolveMarkdownSource`, `createHtmlRenderedContent`, `buildEntryRenderedContent`.
+
+**With `generateCollections`:**
+
+```typescript
+strapiCollections = await generateCollections({
+  url: import.meta.env.STRAPI_URL,
+  token: import.meta.env.STRAPI_TOKEN,
+}, [{
+  name: "articles",
+  idGenerator: (data) => data.slug as string,
+  markdown: { field: "content" },
+  query: { populate: { seo: true } },
+}]);
+```
+
+**With `getMarkdown` (compose / nested fields):**
+
+```typescript
+markdown: {
+  getMarkdown: (data) => {
+    const blocks = data.sections as Array<{ body?: string }> | undefined;
+    return blocks?.map((b) => b.body).filter(Boolean).join("\n\n");
+  },
+}
+```
+
+**In a page:**
+
+```astro
+---
+import { getEntry, render } from 'astro:content';
+const entry = await getEntry('articles', Astro.params.slug);
+const { Content } = await render(entry);
+---
+<Content />
+```
+
+> **Note:** This targets **string Markdown** (or HTML with `format: "html"`). Strapi **Blocks** remain a separate concern (e.g. a blocks renderer package).
 
 ### Query Options
 

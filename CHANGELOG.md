@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-07-26
+
+### Added
+
+- **Native Markdown rendering** (opt-in) — `markdown` on `StrapiLoaderOptions` / `StrapiCollection` uses Astro `LoaderContext.renderMarkdown()` so `render()` / `<Content />` inherit the project markdown config (#6).
+  - `field` (dot-path) and `getMarkdown` extractor
+  - `includeBody` (default `true`) and `format: "markdown" | "html"`
+  - Helpers: `getValueByPath`, `resolveMarkdownSource`, `createHtmlRenderedContent`, `buildEntryRenderedContent`
+- Unit tests for markdown helpers and loader integration (including locales).
+
+### Changed
+
+- Base load path is unchanged when `markdown` is omitted.
+
 ## [1.4.0] - 2026-07-26
 
 ### Added

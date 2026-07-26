@@ -420,5 +420,103 @@ describe("strapiLoader - Extended Features", () => {
       });
     });
   });
+
+  describe("Native Markdown rendering", () => {
+    const renderMarkdown = jest.fn(async (content: string) => ({
+      html: `<article>${content}</article>`,
+    }));
+
+    beforeEach(() => {
+      renderMarkdown.mockClear();
+      (mockContext as any).renderMarkdown = renderMarkdown;
+    });
+
+    it("does not call renderMarkdown when markdown option is omitted", async () => {
+      (fetchContent as jest.Mock).mockResolvedValueOnce({
+        data: [{ documentId: "1", content: "# Hi" }],
+      });
+
+      const loader = strapiLoader("posts", options);
+      await loader.load(mockContext as unknown as LoaderContext);
+
+      expect(renderMarkdown).not.toHaveBeenCalled();
+      expect(mockContext.store.set).toHaveBeenCalledWith({
+        id: "1",
+        data: { documentId: "1", content: "# Hi" },
+        digest: "test-digest",
+      });
+    });
+
+    it("stores body + rendered from field via Astro renderMarkdown", async () => {
+      (fetchContent as jest.Mock).mockResolvedValueOnce({
+        data: [{ documentId: "1", content: "# Hello" }],
+      });
+
+      const loader = strapiLoader("posts", {
+        ...options,
+        markdown: { field: "content" },
+      });
+      await loader.load(mockContext as unknown as LoaderContext);
+
+      expect(renderMarkdown).toHaveBeenCalledWith("# Hello");
+      expect(mockContext.store.set).toHaveBeenCalledWith({
+        id: "1",
+        data: { documentId: "1", content: "# Hello" },
+        digest: "test-digest",
+        body: "# Hello",
+        rendered: { html: "<article># Hello</article>" },
+      });
+    });
+
+    it("uses getMarkdown and works with locales", async () => {
+      (fetchContent as jest.Mock)
+        .mockResolvedValueOnce({
+          data: [{ documentId: "1", title: "EN", content: "Body EN" }],
+        })
+        .mockResolvedValueOnce({
+          data: [{ documentId: "1", title: "DE", content: "Body DE" }],
+        });
+
+      const loader = strapiLoader("posts", {
+        ...options,
+        locale: ["en", "de"],
+        markdown: {
+          getMarkdown: (data) => `# ${data.title}\n\n${data.content}`,
+        },
+      });
+      await loader.load(mockContext as unknown as LoaderContext);
+
+      expect(renderMarkdown).toHaveBeenCalledWith("# EN\n\nBody EN");
+      expect(renderMarkdown).toHaveBeenCalledWith("# DE\n\nBody DE");
+      expect(mockContext.store.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "en:1",
+          body: "# EN\n\nBody EN",
+          rendered: { html: "<article># EN\n\nBody EN</article>" },
+        }),
+      );
+    });
+
+    it("supports format html without calling renderMarkdown", async () => {
+      (fetchContent as jest.Mock).mockResolvedValueOnce({
+        data: [{ documentId: "1", html: "<p>raw</p>" }],
+      });
+
+      const loader = strapiLoader("posts", {
+        ...options,
+        markdown: { field: "html", format: "html" },
+      });
+      await loader.load(mockContext as unknown as LoaderContext);
+
+      expect(renderMarkdown).not.toHaveBeenCalled();
+      expect(mockContext.store.set).toHaveBeenCalledWith({
+        id: "1",
+        data: { documentId: "1", html: "<p>raw</p>" },
+        digest: "test-digest",
+        body: "<p>raw</p>",
+        rendered: { html: "<p>raw</p>" },
+      });
+    });
+  });
 });
 
