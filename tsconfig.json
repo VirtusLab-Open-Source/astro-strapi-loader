@@ -13,7 +13,7 @@
     "types": ["astro/client", "astro/loaders", "jest", "node"],
     "paths": {
       "astro:content": ["./node_modules/astro/dist/content/index.d.ts"],
-      "astro/loaders": ["./node_modules/astro/dist/loaders/index.d.ts"]
+      "astro/loaders": ["./node_modules/astro/dist/content/loaders/index.d.ts"]
     }
   },
   "include": ["src/**/*"],

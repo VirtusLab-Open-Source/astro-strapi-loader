@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-26
+
+### Added
+
+- **Astro 7 support** — peer dependency range widened to `astro@^6.0.0 || ^7.0.0`; package development dependency bumped to Astro 7.
+
+### Changed
+
+- Dev dependency `qs` bumped to `^6.15.3`.
+- `@astrojs/ts-plugin` bumped to `^1.10.10`.
+- README requirements updated for Astro 6/7 and Node.js `>=22.12.0`.
+
 ## [1.2.2] - 2026-04-07
 
 ### Fixed

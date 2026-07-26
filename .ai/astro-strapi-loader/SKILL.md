@@ -4,14 +4,14 @@ description: >-
   Use @sensinum/astro-strapi-loader with Astro Content Layer: build Strapi REST query objects
   (object and object-array populate per REST parameters), let qs.stringify serialize—never
   inline query strings. Composable query fragments, dynamic zone "on", locale strategies,
-  generateCollections, getCollection / getEntry. Strapi 5, Astro 6+.
+  generateCollections,   getCollection / getEntry. Strapi 5, Astro 6 or 7.
 ---
 
 # Astro Strapi Loader — agent skill
 
 ## Scope
 
-- **Package:** `@sensinum/astro-strapi-loader` (Astro 6+ peer, Strapi 5).
+- **Package:** `@sensinum/astro-strapi-loader` (peer `astro` `^6 || ^7`, Strapi 5).
 - **Goal:** Load Strapi at build time into Astro content collections with correct `populate` graphs, dynamic zones, and i18n.
 
 ## Install and base wiring
