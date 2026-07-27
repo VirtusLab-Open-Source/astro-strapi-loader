@@ -57,7 +57,8 @@ async function strapiRequest<T>(options: StrapiRequestOptions): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch from Strapi: ${response.statusText}`);
+    const responseText = await response.text();
+    throw new Error(`Failed to fetch from Strapi: ${response.statusText}\nStrapi response: ${responseText}`);
   }
 
   return response.json();

@@ -54,16 +54,19 @@ describe("Strapi Utils", () => {
     });
 
     it("should throw error on failed request", async () => {
+      const responseText = '{"data":null,"error":{"message":"Content type not found"}}';
+
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         statusText: "Not Found",
+        text: () => Promise.resolve(responseText),
       });
 
       await expect(
         fetchContentTypes({
           url: "http://localhost:1337",
         }),
-      ).rejects.toThrow("Failed to fetch from Strapi: Not Found");
+      ).rejects.toThrow(`Failed to fetch from Strapi: Not Found\nStrapi response: ${responseText}`);
     });
   });
 
@@ -109,6 +112,7 @@ describe("Strapi Utils", () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         statusText: "Not Found",
+        text: () => Promise.resolve(""),
       });
 
       await expect(
@@ -175,6 +179,7 @@ describe("Strapi Utils", () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         statusText: "Unauthorized",
+        text: () => Promise.resolve(""),
       });
 
       await expect(
@@ -276,6 +281,7 @@ describe("Strapi Utils", () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         statusText: "Server Error",
+        text: () => Promise.resolve(""),
       });
 
       await expect(
@@ -299,6 +305,7 @@ describe("Strapi Utils", () => {
         .mockResolvedValueOnce({
           ok: false,
           statusText: "Server Error",
+          text: () => Promise.resolve(""),
         });
 
       await expect(
