@@ -1,5 +1,9 @@
 import type { Loader, LoaderContext } from "astro/loaders";
 import qs from "qs";
+import {
+  buildEntryRenderedContent,
+  type StrapiMarkdownOptions,
+} from "./markdown";
 import { fetchContent } from "./strapi";
 
 export interface StrapiLoaderOptions {
@@ -22,7 +26,24 @@ export interface StrapiLoaderOptions {
    * - string[]: multiple locales (e.g., ['en', 'de']) - returns structure like { 'en': items, 'de': items }
    */
   locale?: string | string[];
+  /**
+   * Opt-in Markdown / HTML body rendering via Astro's Content Layer.
+   * When set, entries get `rendered` (and usually `body`) so `render()` / `<Content />` work
+   * with the project's markdown config. When omitted, behavior is unchanged.
+   */
+  markdown?: StrapiMarkdownOptions;
 }
+
+type StoreHelpers = {
+  store: LoaderContext["store"];
+  logger: LoaderContext["logger"];
+  parseData: LoaderContext["parseData"];
+  generateDigest: LoaderContext["generateDigest"];
+  renderMarkdown?: LoaderContext["renderMarkdown"];
+  idGenerator?: (data: Record<string, unknown>) => string;
+  markdown?: StrapiMarkdownOptions;
+  collectionName: string;
+};
 
 export function strapiLoader(
   contentType: string,
@@ -32,13 +53,25 @@ export function strapiLoader(
   return ({
     name: options.collectionName || "strapi-loader",
     load: async (context: LoaderContext): Promise<void> => {
-      const { store, logger, parseData, generateDigest } = context;
+      const { store, logger, parseData, generateDigest, renderMarkdown } =
+        context;
       const collectionName = options.collectionName || contentType;
 
       logger.info(`[${collectionName}] Loading data from Strapi...`);
-      const { url, token, idGenerator, locale, headers } = options;
+      const { url, token, idGenerator, locale, headers, markdown } = options;
 
       store.clear();
+
+      const storeHelpers: StoreHelpers = {
+        store,
+        logger,
+        parseData,
+        generateDigest,
+        renderMarkdown,
+        idGenerator,
+        markdown,
+        collectionName,
+      };
 
       // Determine which locales to fetch
       const localesToFetch: string[] | undefined = locale
@@ -51,7 +84,7 @@ export function strapiLoader(
       if (!localesToFetch) {
         await fetchAndStoreData(
           { url, token, contentType, query, headers },
-          { store, logger, parseData, generateDigest, idGenerator, collectionName }
+          storeHelpers,
         );
       } else {
         // Fetch data for each locale separately
@@ -80,15 +113,51 @@ export function strapiLoader(
         }
 
         // Store data with locale structure
-        await storeLocaleData(
-          localeDataMap,
-          { store, parseData, generateDigest, idGenerator }
-        );
+        await storeLocaleData(localeDataMap, storeHelpers);
       }
 
       logger.info(`[${collectionName}] Loading data from Strapi... DONE`);
     },
   }) satisfies Loader;
+}
+
+async function storeParsedEntry(
+  item: Record<string, unknown>,
+  itemId: string,
+  helpers: StoreHelpers,
+): Promise<void> {
+  const {
+    store,
+    parseData,
+    generateDigest,
+    renderMarkdown,
+    markdown,
+  } = helpers;
+
+  const data = await parseData({
+    id: itemId,
+    data: item,
+  });
+
+  const { body, rendered } = await buildEntryRenderedContent(
+    data as Record<string, unknown>,
+    markdown,
+    renderMarkdown,
+  );
+
+  const digest = generateDigest(
+    rendered
+      ? { ...(data as Record<string, unknown>), __renderedHtml: rendered.html }
+      : (data as Record<string, unknown>),
+  );
+
+  store.set({
+    id: itemId,
+    data,
+    digest,
+    ...(body !== undefined ? { body } : {}),
+    ...(rendered !== undefined ? { rendered } : {}),
+  });
 }
 
 async function fetchAndStoreData(
@@ -99,17 +168,10 @@ async function fetchAndStoreData(
     query: Record<string, unknown>;
     headers?: Record<string, string>;
   },
-  storeOptions: {
-    store: LoaderContext['store'];
-    logger: LoaderContext['logger'];
-    parseData: LoaderContext['parseData'];
-    generateDigest: LoaderContext['generateDigest'];
-    idGenerator?: (data: Record<string, unknown>) => string;
-    collectionName: string;
-  }
+  storeHelpers: StoreHelpers,
 ): Promise<void> {
   const { url, token, contentType, query, headers } = fetchOptions;
-  const { store, logger, parseData, generateDigest, idGenerator, collectionName } = storeOptions;
+  const { logger, idGenerator, collectionName } = storeHelpers;
 
   const response = await fetchContent({
     url,
@@ -134,36 +196,23 @@ async function fetchAndStoreData(
   if (Array.isArray(response.data)) {
     await Promise.all(
       response.data.map(async (item: Record<string, unknown>) => {
-        const itemId = getItemId(item);
-        const data = await parseData({
-          id: itemId,
-          data: item,
-        });
-        const digest = generateDigest(data);
-        store.set({ id: itemId, data, digest });
+        await storeParsedEntry(item, getItemId(item), storeHelpers);
       }),
     );
   } else {
-    const itemId = getItemId(response.data);
-    const data = await parseData({
-      id: itemId,
-      data: response.data,
-    });
-    const digest = generateDigest(data);
-    store.set({ id: itemId, data, digest });
+    await storeParsedEntry(
+      response.data,
+      getItemId(response.data),
+      storeHelpers,
+    );
   }
 }
 
 async function storeLocaleData(
   localeDataMap: Record<string, any>,
-  storeOptions: {
-    store: LoaderContext['store'];
-    parseData: LoaderContext['parseData'];
-    generateDigest: LoaderContext['generateDigest'];
-    idGenerator?: (data: Record<string, unknown>) => string;
-  }
+  storeHelpers: StoreHelpers,
 ): Promise<void> {
-  const { store, parseData, generateDigest, idGenerator } = storeOptions;
+  const { idGenerator } = storeHelpers;
 
   const getItemId = (item: Record<string, unknown>, locale: string): string => {
     if (idGenerator) {
@@ -176,23 +225,19 @@ async function storeLocaleData(
     if (Array.isArray(data)) {
       await Promise.all(
         data.map(async (item: Record<string, unknown>) => {
-          const itemId = getItemId(item, locale);
-          const parsedData = await parseData({
-            id: itemId,
-            data: { ...item, _locale: locale },
-          });
-          const digest = generateDigest(parsedData);
-          store.set({ id: itemId, data: parsedData, digest });
+          await storeParsedEntry(
+            { ...item, _locale: locale },
+            getItemId(item, locale),
+            storeHelpers,
+          );
         }),
       );
     } else {
-      const itemId = getItemId(data, locale);
-      const parsedData = await parseData({
-        id: itemId,
-        data: { ...data, _locale: locale },
-      });
-      const digest = generateDigest(parsedData);
-      store.set({ id: itemId, data: parsedData, digest });
+      await storeParsedEntry(
+        { ...data, _locale: locale },
+        getItemId(data, locale),
+        storeHelpers,
+      );
     }
   }
 }

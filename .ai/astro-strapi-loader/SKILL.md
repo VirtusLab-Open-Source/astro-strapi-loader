@@ -142,6 +142,17 @@ The same `StrapiCollection` shape applies; routing is defined by the content typ
 - `getEntry('key', 'locale:documentId' | 'locale:slug')` when using prefixed ids.
 - **Runtime** Strapi calls: `fetchContent` with **`qs.stringify`’d** params, ideally reusing the **same** query object as build time.
 
+### Native Markdown (`render()` / `<Content />`)
+
+Opt-in via `markdown` on the collection / `strapiLoader` options (omit = unchanged behavior):
+
+- `field`: dot-path to a markdown string
+- `getMarkdown`: custom extractor (wins over `field`)
+- `format: "html"` for already-rendered HTML; default `"markdown"` uses Astro `renderMarkdown()`
+- Helpers: `getValueByPath`, `resolveMarkdownSource`, `createHtmlRenderedContent`, `buildEntryRenderedContent`
+
+Not for Strapi Blocks JSON — only string Markdown/HTML fields.
+
 ## Troubleshooting
 
 - **Empty or partial data:** `populate` depth, wrong `locale`, draft/unpublished, or `filters` too strict.
