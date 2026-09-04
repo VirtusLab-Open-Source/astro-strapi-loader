@@ -59,6 +59,7 @@
   },
   "dependencies": {
     "astro": "^7.0.0",
+    "qs": "^6.15.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -72,7 +73,6 @@
     "husky": "^9.0.0",
     "jest": "^29.7.0",
     "prettier": "^3.0.0",
-    "qs": "^6.15.3",
     "ts-jest": "^29.3.4",
     "typescript": "^5.0.0"
   },
